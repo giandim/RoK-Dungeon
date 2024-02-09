@@ -1,0 +1,1 @@
+# ousama-ranking-game
