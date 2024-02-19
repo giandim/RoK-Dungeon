@@ -34,3 +34,4 @@ And use your favorite web server
 - [ ] Items, weapons and armorms
 - [ ] Tactical combat
 - [ ] Sound and Music
+- [ ] Multi language support (ENG and JPN)
