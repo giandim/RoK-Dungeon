@@ -1,0 +1,10 @@
+github.com/shurcooL/go v0.0.0-20200502201357-93f07166e636 h1:aSISeOcal5irEhJd1M+IrApc0PdcN7e7Aj4yuEnOrfQ=
+github.com/shurcooL/go v0.0.0-20200502201357-93f07166e636/go.mod h1:TDJrrUr11Vxrven61rcy3hJMUqaf/CLWYhHNPmT14Lk=
+github.com/shurcooL/go-goon v1.0.0 h1:BCQPvxGkHHJ4WpBO4m/9FXbITVIsvAm/T66cCcCGI7E=
+github.com/shurcooL/go-goon v1.0.0/go.mod h1:2wTHMsGo7qnpmqA8ADYZtP4I1DD94JpXGQ3Dxq2YQ5w=
+github.com/shurcooL/goexec v0.0.0-20230709021537-96bada04ea2b h1:637/WtTYN6u1wzt0dCpGdBJHIggB8inZei6q60AZwjk=
+github.com/shurcooL/goexec v0.0.0-20230709021537-96bada04ea2b/go.mod h1:YrZDETqiwAqnKsivK9+sxwhS9rjMR+2NWGy8TATNb6k=
+golang.org/x/mod v0.15.0 h1:SernR4v+D55NyBH2QiEQrlBAnj1ECL6AGrA5+dPaMY8=
+golang.org/x/mod v0.15.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
+golang.org/x/tools v0.18.0 h1:k8NLag8AGHnn+PHbl7g43CtqZAwG60vZkLqgyZgIHgQ=
+golang.org/x/tools v0.18.0/go.mod h1:GL7B4CwcLLeo59yx/9UWWuNOW1n3VZ4f5axWfML7Lcg=

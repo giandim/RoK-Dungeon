@@ -1,0 +1,157 @@
+:root {
+  --white-color: #fff;
+  --main-bg-color: #484f58;
+  --command-panel-bg-color: #222;
+  --tile-size: 70px;
+  --border-radius: 5px;
+}
+
+body {
+  margin: 0;
+  background-color: var(--main-bg-color);
+  display: grid;
+  grid-template-areas: "command-panel editor editor";
+  grid-template-columns: 250px 1fr;
+}
+
+button {
+  border: none;
+  padding: 5px 0;
+  border-radius: var(--border-radius);
+}
+
+#command-panel {
+  grid-area: command-panel;
+  background-color: var(--command-panel-bg-color);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 5px;
+}
+
+#editor {
+  grid-area: editor;
+}
+
+.bgroup {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+}
+
+.bgroup button {
+  color: var(--white-color);
+  width: 50px;
+  height: 50px;
+}
+
+.bgroup button.ground {
+  background: url("../assets/images/dungeon_tiles.png") right top no-repeat;
+  background-size: 32rem;
+}
+
+.bgroup button.wall {
+  background: url("../assets/images/dungeon_tiles.png") right top no-repeat;
+  background-size: 32rem;
+}
+
+button.wall.top {
+  background-position: -52px 0px;
+}
+
+button.wall.right {
+  background-position: -230px -103px;
+}
+
+button.wall.tr {
+  background-position: -229px 0;
+}
+
+button.wall.left {
+  background-position: -28px -103px;
+}
+
+button.wall.tl {
+  background-position: -30px 0;
+}
+
+button.wall.bl {
+  background-position: -28px -177px;
+}
+
+button.wall.br {
+  background-position: -229px -177px;
+}
+
+.grid {
+  display: grid;
+  border: 1px solid black;
+  grid-gap: 1px;
+  background-color: black;
+  margin-left: auto;
+  margin-right: auto;
+  width: fit-content;
+}
+
+.grid > div {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  background-color: white;
+}
+
+.col-9 {
+  grid-template-columns: repeat(9, var(--tile-size));
+}
+
+.col-9 > div {
+  height: var(--tile-size);
+}
+
+.col-9 > div.wall {
+  background: url("../assets/images/forest_tiles.png") no-repeat -402px 0;
+  background-size: 70rem;
+  background: url(../assets/images/dungeon_tiles.png) no-repeat -70px top;
+  background-size: 44rem;
+}
+
+.col-9 > div.wall.right {
+  background-position: -313px -141px;
+}
+
+.col-9 > div.wall.left {
+  background-position: -40px -141px;
+}
+
+.col-9 > div.wall.tl {
+  background-position: -40px 0;
+}
+
+.col-9 > div.wall.bl {
+  background-position: -40px -243px;
+}
+
+.col-9 > div.wall.tr {
+  background-position: -313px 0;
+}
+
+.col-9 > div.wall.br {
+  background-position: -313px -243px;
+}
+
+.col-9 > div.ground {
+  background: url("../assets/images/forest_tiles.png") no-repeat;
+  background: url("../assets/images/dungeon_tiles.png") right top no-repeat;
+  background-size: 70rem;
+  background-size: 18rem;
+}
+
+.player {
+  width: 100%;
+  height: 100%;
+  background:
+    url("../assets/images/bojji.png") center center no-repeat,
+    url("../assets/images/dungeon_tiles.png") right top no-repeat,
+    url("../assets/images/forest_tiles.png") no-repeat;
+  background-size: 60px, 18rem, 70rem;
+}
