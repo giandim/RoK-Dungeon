@@ -4,6 +4,7 @@
   --command-panel-bg-color: #222;
   --tile-size: 70px;
   --border-radius: 5px;
+  --small-padding: 5px;
 }
 
 body {
@@ -12,11 +13,12 @@ body {
   display: grid;
   grid-template-areas: "command-panel editor editor";
   grid-template-columns: 250px 1fr;
+  image-rendering: pixelated;
 }
 
 button {
   border: none;
-  padding: 5px 0;
+  padding: var(--small-padding) 0;
   border-radius: var(--border-radius);
 }
 
@@ -37,6 +39,9 @@ button {
   display: grid;
   gap: 5px;
   grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+  padding: var(--small-padding);
+  background-color: var(--main-bg-color);
+  border-radius: var(--border-radius);
 }
 
 .bgroup button {
@@ -91,6 +96,10 @@ button.wall.br {
   margin-left: auto;
   margin-right: auto;
   width: fit-content;
+}
+
+.grid.no-gap {
+  grid-gap: 0;
 }
 
 .grid > div {
@@ -154,4 +163,8 @@ button.wall.br {
     url("../assets/images/dungeon_tiles.png") right top no-repeat,
     url("../assets/images/forest_tiles.png") no-repeat;
   background-size: 60px, 18rem, 70rem;
+}
+
+.hidden {
+  display: none;
 }

@@ -7,10 +7,14 @@ import (
 	"syscall/js"
 )
 
+type Layer struct {
+	materialType string
+	direction    string
+}
+
 type Tile struct {
-	tileType   string
-	direction  string
 	isBlocking bool
+	layers     [2]Layer
 }
 
 var block [][]Tile
@@ -20,14 +24,19 @@ func renderGrid() {
 
 	for y := range block {
 		for x, tile := range block[y] {
-			cssClass := tile.tileType + " " + tile.direction
+			secondLayer := ""
+			cssClass := tile.layers[0].materialType + " " + tile.layers[0].direction
+
+			if tile.layers[1] != (Layer{}) {
+				secondLayer = fmt.Sprintf("<div onclick=\"selectTile('%d,%d')\" class=\"%s\"></div>", y, x, tile.layers[1].materialType)
+			}
 
 			// add a player placeholder
 			if y == 8 && x == 4 {
 				cssClass = "player"
 			}
 
-			grid += fmt.Sprintf("<div onclick=\"selectTile('%d,%d')\" class=\"%s\"></div>", y, x, cssClass)
+			grid += fmt.Sprintf("<div onclick=\"selectTile('%d,%d')\" class=\"%s\">%s</div>", y, x, cssClass, secondLayer)
 		}
 	}
 
@@ -48,22 +57,32 @@ func getButtons(this js.Value, args []js.Value) interface{} {
 		{"ground", []string{}, false},
 	}
 
-	jsButtons := js.Global().Get("Array").New(len(buttons))
+	resetButton := `<button onclick="createBlock()">Reset Block</button>`
+	gridButton := `<button onclick="toggleGrid()">Toggle Grid</button>`
+	var buttonGroup string
 
 	for i, button := range buttons {
-		jsButton := js.Global().Get("Object").New()
-		jsButton.Set("type", button.buttonType)
-		jsButton.Set("directions", jsSliceOf(button.directions))
-		jsButton.Set("blocking", button.isBlocking)
-		jsButtons.SetIndex(i, jsButton)
+		buttonGroup += fmt.Sprintf(`<button onclick="showButtons(%d)">%s</button>`, i, button.buttonType)
+		buttonGroup += fmt.Sprintf(`<div id="bgroup-%d" class="bgroup hidden">`, i)
+
+		if len(button.directions) > 0 {
+			for _, direction := range button.directions {
+				buttonGroup += fmt.Sprintf(`<button class="%s %s" onclick="EDITOR.commandType='%s'; EDITOR.commandParams = {direction: '%s'};"></button>`, button.buttonType, direction, button.buttonType, direction)
+			}
+		} else {
+			buttonGroup += fmt.Sprintf(`<button class="%s" onclick="EDITOR.commandType='%s'; EDITOR.commandParams = [];"></button>`, button.buttonType, button.buttonType)
+		}
+		buttonGroup += "</div>"
 	}
 
-	return jsButtons
+	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", resetButton+gridButton+buttonGroup)
+
+	return nil
 }
 
 func createBlock(this js.Value, args []js.Value) interface{} {
 	block = make([][]Tile, 9)
-	defaultTile := Tile{tileType: "ground", direction: "", isBlocking: false}
+	defaultTile := Tile{layers: [2]Layer{{materialType: "ground", direction: ""}, {}}, isBlocking: false}
 
 	for i := range block {
 		block[i] = make([]Tile, 9)
@@ -84,25 +103,12 @@ func selectTile(this js.Value, args []js.Value) interface{} {
 	y, _ := strconv.Atoi(coordinates[0])
 	x, _ := strconv.Atoi(coordinates[1])
 
-	block[y][x].tileType = args[1].String()
+	block[y][x].layers[0].materialType = args[1].String()
 	block[y][x].isBlocking = args[2].Bool()
-	block[y][x].direction = args[3].String()
+	block[y][x].layers[0].direction = args[3].String()
 
 	renderGrid()
-
-	// retrieves the JavaScript array constructor and create a new one
-	jsTile := js.Global().Get("Array").New(len(block))
-
-	for i, row := range block {
-		jsRow := js.Global().Get("Array").New(len(row))
-		for j, tile := range row {
-			// set value at the index
-			jsRow.SetIndex(j, tile.isBlocking)
-		}
-		jsTile.SetIndex(i, jsRow)
-	}
-
-	return jsTile
+	return nil
 }
 
 func registerCallbacks() {
