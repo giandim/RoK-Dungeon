@@ -19,6 +19,12 @@ And use your favorite web server
 ## Features
 ### Editor
 - [ ] Tileset and Map Editor
+  - [ ] Add collisions
+  - [ ] Add layers
+  - [ ] Add different types of walls, grounds, etc
+  - [ ] Save current block
+  - [ ] Load current block
+  - [ ] Choose a size for the block
 - [ ] Procedural Generation Controls
 - [ ] Enemy Placement and Behavior
 - [ ] Item and Loot Editor
@@ -35,3 +41,8 @@ And use your favorite web server
 - [ ] Tactical combat
 - [ ] Sound and Music
 - [ ] Multi language support (ENG and JPN)
+
+## TODO
+- [ ] Add a proper console log for wasm
+- [ ] Add JSdoc for the client
+- [ ] Make a proper build
