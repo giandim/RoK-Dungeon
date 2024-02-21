@@ -27,7 +27,7 @@ Editor -> localhost:8080/web/editor.html
 ### Editor
 
 - [ ] Tileset and Map Editor
-  - [ ] Add collisions
+  - [X] Add collisions
   - [ ] Add layers
   - [ ] Add different types of walls, grounds, etc
   - [ ] Save current block
