@@ -5,6 +5,7 @@
   --tile-size: 70px;
   --border-radius: 5px;
   --small-padding: 5px;
+  --col-number: 9;
 }
 
 body {
@@ -38,6 +39,9 @@ button.active {
 
 #editor {
   grid-area: editor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .bgroup {
@@ -98,9 +102,8 @@ button.wall.br {
   border: 1px solid black;
   grid-gap: 1px;
   background-color: black;
-  margin-left: auto;
-  margin-right: auto;
   width: fit-content;
+  grid-template-columns: repeat(var(--col-number), var(--tile-size));
 }
 
 .grid.no-gap {
@@ -114,53 +117,49 @@ button.wall.br {
   background-color: white;
 }
 
-.col-9 {
-  grid-template-columns: repeat(9, var(--tile-size));
-}
-
-.col-9 > div {
+.grid > div {
   height: var(--tile-size);
 }
 
-.col-9 > div.wall {
+.grid > div.wall {
   background: url("../assets/images/forest_tiles.png") no-repeat -402px 0;
   background-size: 70rem;
   background: url(../assets/images/dungeon_tiles.png) no-repeat -70px top;
   background-size: 44rem;
 }
 
-.col-9 > div.wall.right {
+.grid > div.wall.right {
   background-position: -313px -141px;
 }
 
-.col-9 > div.wall.left {
+.grid > div.wall.left {
   background-position: -40px -141px;
 }
 
-.col-9 > div.wall.tl {
+.grid > div.wall.tl {
   background-position: -40px 0;
 }
 
-.col-9 > div.wall.bl {
+.grid > div.wall.bl {
   background-position: -40px -243px;
 }
 
-.col-9 > div.wall.tr {
+.grid > div.wall.tr {
   background-position: -313px 0;
 }
 
-.col-9 > div.wall.br {
+.grid > div.wall.br {
   background-position: -313px -243px;
 }
 
-.col-9 > div.ground {
+.grid > div.ground {
   background: url("../assets/images/forest_tiles.png") no-repeat;
   background: url("../assets/images/dungeon_tiles.png") right top no-repeat;
   background-size: 70rem;
   background-size: 18rem;
 }
 
-.col-9 > div.collision.show::before {
+.grid > div.collision.show::before {
   background: rgba(255, 0, 0, 0.2);
   content: "";
   width: 100%;

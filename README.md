@@ -27,12 +27,14 @@ Editor -> localhost:8080/web/editor.html
 ### Editor
 
 - [ ] Tileset and Map Editor
-  - [X] Add collisions
+  - [x] Add collisions
   - [ ] Add layers
   - [ ] Add different types of walls, grounds, etc
   - [ ] Save current block
   - [ ] Load current block
   - [ ] Choose a size for the block
+  - [ ] Floor Misc
+  - [ ] Wall Misc
 - [ ] Procedural Generation Controls
 - [ ] Enemy Placement and Behavior
 - [ ] Item and Loot Editor
@@ -50,6 +52,7 @@ Editor -> localhost:8080/web/editor.html
 - [ ] Items, weapons and armorms
 - [ ] Tactical combat
 - [ ] Sound and Music
+- [ ] Level progression
 - [ ] Multi language support (ENG and JPN)
 
 ## TODO

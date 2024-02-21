@@ -35,7 +35,7 @@ func getTileTypes() map[string]bool {
 
 // Render the main grid for the editor
 func renderGrid() {
-	grid := fmt.Sprintf("<div class='grid col-%d'>", len(block[0]))
+	grid := "<div class='grid'>"
 
 	for y := range block {
 		for x, tile := range block[y] {
