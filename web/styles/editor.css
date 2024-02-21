@@ -18,8 +18,13 @@ body {
 
 button {
   border: none;
-  padding: var(--small-padding) 0;
+  padding: var(--small-padding);
   border-radius: var(--border-radius);
+}
+
+button.active {
+  background-color: var(--main-bg-color);
+  color: white;
 }
 
 #command-panel {
@@ -153,6 +158,13 @@ button.wall.br {
   background: url("../assets/images/dungeon_tiles.png") right top no-repeat;
   background-size: 70rem;
   background-size: 18rem;
+}
+
+.col-9 > div.collision.show::before {
+  background: rgba(255, 0, 0, 0.2);
+  content: "";
+  width: 100%;
+  height: 100%;
 }
 
 .player {

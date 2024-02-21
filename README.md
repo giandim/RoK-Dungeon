@@ -1,4 +1,5 @@
 # RoK Dungeon
+
 A dungeon crawler game based on Raking of Kings (王様ランキング) made with Golang, WebAssembly and JavaScript.
 
 The game features an editor that empowers you to shape the very tower Bojji ascends. Populate ascending floors with creatures, set traps, and script events to create challenges that reflect the essence of Bojji's ascent. Kage, your ever-helpful companion, will assist in unraveling the secrets hidden within the ascending tower, providing guidance and aid as you climb to new heights.
@@ -6,18 +7,25 @@ The game features an editor that empowers you to shape the very tower Bojji asce
 (Thanks ChatGPT)
 
 ## Build and Run
+
 If you have [goexec](https://github.com/shurcooL/goexec) installed, simply run
+
 ```
 bash ./build.sh
 ```
-Or you can build it with
+
+Or you can build it and use your favorite web server with
+
 ```
 GOOS=js GOARCH=wasm go build -o dist/editor.wasm game-engine/editor.go game-engine/utils.go
 ```
-And use your favorite web server 
+
+Editor -> localhost:8080/web/editor.html
 
 ## Features
+
 ### Editor
+
 - [ ] Tileset and Map Editor
   - [ ] Add collisions
   - [ ] Add layers
@@ -32,7 +40,9 @@ And use your favorite web server
 - [ ] Group floors and tiles by complexity and difficulty
 - [ ] Dialogue and Quest Editor
 - [ ] Undo/Redo Functionality
+
 ### Game
+
 - [ ] Procedurally Generated floors
 - [ ] Random events
 - [ ] Boss battles
@@ -43,6 +53,8 @@ And use your favorite web server
 - [ ] Multi language support (ENG and JPN)
 
 ## TODO
+
 - [ ] Add a proper console log for wasm
 - [ ] Add JSdoc for the client
 - [ ] Make a proper build
+- [ ] Error handling
