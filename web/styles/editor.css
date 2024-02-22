@@ -127,13 +127,10 @@ button.wall.br {
   width: calc(var(--tile-size) * var(--scale-value));
 }
 
-.grid div.wall {
-  background: url(../assets/images/dungeon_tiles.png) no-repeat;
-  background-size: calc(var(--tileset-size) * var(--scale-value));
-}
-
+.grid div.wall,
+.grid div.item,
 .grid div.floor {
-  background: url("../assets/images/dungeon_tiles.png") no-repeat;
+  background: url(../assets/images/dungeon_tiles.png) no-repeat;
   background-size: calc(var(--tileset-size) * var(--scale-value));
 }
 

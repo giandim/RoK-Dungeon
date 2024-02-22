@@ -21,6 +21,7 @@ const (
 	Wall      = "wall"
 	Floor     = "floor"
 	Collision = "collision"
+	Item      = "item"
 )
 
 var block [][]Tile
@@ -30,6 +31,7 @@ func getTileTypes() map[string]bool {
 		Collision: true,
 		Wall:      true,
 		Floor:     true,
+		Item:      true,
 	}
 }
 
@@ -130,8 +132,12 @@ func setTile(this js.Value, args []js.Value) interface{} {
 
 	coordinates := strings.Split(args[0].String(), ",")
 	tileType := args[1].String()
-	tileId := uint8(args[2].Int())
 	layer := 0
+	tileId := uint8(0)
+
+	if !args[2].IsUndefined() {
+		tileId = uint8(args[2].Int())
+	}
 
 	if !args[3].IsUndefined() {
 		layer = args[3].Int()
@@ -140,9 +146,7 @@ func setTile(this js.Value, args []js.Value) interface{} {
 	y, _ := strconv.Atoi(coordinates[0])
 	x, _ := strconv.Atoi(coordinates[1])
 
-	_, ok := getTileTypes()[tileType]
-
-	if !ok {
+	if _, ok := getTileTypes()[tileType]; !ok {
 		return nil
 	}
 
@@ -152,8 +156,6 @@ func setTile(this js.Value, args []js.Value) interface{} {
 	} else {
 		block[y][x].isBlocking = !block[y][x].isBlocking
 	}
-
-	fmt.Println(block[y][x].layers[layer].materialType)
 
 	renderGrid()
 	return nil
