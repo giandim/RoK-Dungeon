@@ -39,7 +39,7 @@ function selectTile(coordinates) {
   _EDITOR_setTile(
     coordinates,
     EDITOR.tileType,
-    EDITOR.commandParams.direction || "top",
+    EDITOR.commandParams.tileId,
     EDITOR.layer,
   );
 

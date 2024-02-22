@@ -2,10 +2,12 @@
   --white-color: #fff;
   --main-bg-color: #484f58;
   --command-panel-bg-color: #222;
-  --tile-size: 70px;
   --border-radius: 5px;
   --small-padding: 5px;
   --col-number: 9;
+  --scale-value: 5;
+  --tileset-size: 160px;
+  --tile-size: 16px;
 }
 
 body {
@@ -59,9 +61,9 @@ button.active {
   height: 50px;
 }
 
-.bgroup button.ground {
+.bgroup button.tile {
   background: url("../assets/images/dungeon_tiles.png") right top no-repeat;
-  background-size: 32rem;
+  background-size: calc(16px * 31);
 }
 
 .bgroup button.wall {
@@ -103,7 +105,10 @@ button.wall.br {
   grid-gap: 1px;
   background-color: black;
   width: fit-content;
-  grid-template-columns: repeat(var(--col-number), var(--tile-size));
+  grid-template-columns: repeat(
+    var(--col-number),
+    calc(var(--tile-size) * var(--scale-value))
+  );
 }
 
 .grid.no-gap {
@@ -117,46 +122,19 @@ button.wall.br {
   background-color: white;
 }
 
-.grid > div {
-  height: var(--tile-size);
+.grid div {
+  height: calc(var(--tile-size) * var(--scale-value));
+  width: calc(var(--tile-size) * var(--scale-value));
 }
 
-.grid > div.wall {
-  background: url("../assets/images/forest_tiles.png") no-repeat -402px 0;
-  background-size: 70rem;
-  background: url(../assets/images/dungeon_tiles.png) no-repeat -70px top;
-  background-size: 44rem;
+.grid div.wall {
+  background: url(../assets/images/dungeon_tiles.png) no-repeat;
+  background-size: calc(var(--tileset-size) * var(--scale-value));
 }
 
-.grid > div.wall.right {
-  background-position: -313px -141px;
-}
-
-.grid > div.wall.left {
-  background-position: -40px -141px;
-}
-
-.grid > div.wall.tl {
-  background-position: -40px 0;
-}
-
-.grid > div.wall.bl {
-  background-position: -40px -243px;
-}
-
-.grid > div.wall.tr {
-  background-position: -313px 0;
-}
-
-.grid > div.wall.br {
-  background-position: -313px -243px;
-}
-
-.grid > div.ground {
-  background: url("../assets/images/forest_tiles.png") no-repeat;
-  background: url("../assets/images/dungeon_tiles.png") right top no-repeat;
-  background-size: 70rem;
-  background-size: 18rem;
+.grid div.floor {
+  background: url("../assets/images/dungeon_tiles.png") no-repeat;
+  background-size: calc(var(--tileset-size) * var(--scale-value));
 }
 
 .grid > div.collision.show::before {

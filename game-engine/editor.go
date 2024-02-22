@@ -9,7 +9,7 @@ import (
 
 type Layer struct {
 	materialType string
-	direction    string
+	tileId       uint8
 }
 
 type Tile struct {
@@ -19,7 +19,7 @@ type Tile struct {
 
 const (
 	Wall      = "wall"
-	Ground    = "ground"
+	Floor     = "floor"
 	Collision = "collision"
 )
 
@@ -29,7 +29,7 @@ func getTileTypes() map[string]bool {
 	return map[string]bool{
 		Collision: true,
 		Wall:      true,
-		Ground:    true,
+		Floor:     true,
 	}
 }
 
@@ -40,7 +40,9 @@ func renderGrid() {
 	for y := range block {
 		for x, tile := range block[y] {
 			secondLayer := ""
-			cssClass := tile.layers[0].materialType + " " + tile.layers[0].direction
+			cssClass := tile.layers[0].materialType
+
+			var tileX, tileY int16
 
 			if tile.isBlocking {
 				cssClass += " collision"
@@ -48,15 +50,17 @@ func renderGrid() {
 
 			// Add a second layer if present
 			if tile.layers[1] != (Layer{}) {
-				secondLayer = fmt.Sprintf("<div onclick=\"selectTile('%d,%d')\" class=\"%s\"></div>", y, x, tile.layers[1].materialType)
+				tileX, tileY, _ = getCoordinates(int16(tile.layers[1].tileId))
+				secondLayer = fmt.Sprintf("<div onclick=\"selectTile('%d,%d')\" class=\"%s\" style=\"background-position: %dpx %dpx\"></div>", y, x, tile.layers[1].materialType, tileX*16*-5, tileY*16*-5)
 			}
 
 			// add a player placeholder
 			if y == 8 && x == 4 {
-				cssClass = "player"
+				secondLayer = fmt.Sprintf("<div onclick=\"selectTile('%d,%d')\" class=\"player\"></div>", y, x)
 			}
 
-			grid += fmt.Sprintf("<div onclick=\"selectTile('%d,%d')\" class=\"%s\">%s</div>", y, x, cssClass, secondLayer)
+			tileX, tileY, _ = getCoordinates(int16(tile.layers[0].tileId))
+			grid += fmt.Sprintf("<div onclick=\"selectTile('%d,%d')\" class=\"%s\" style=\"background-position: %dpx %dpx\">%s</div>", y, x, cssClass, tileX*16*-5, tileY*16*-5, secondLayer)
 		}
 	}
 
@@ -71,11 +75,6 @@ type Button struct {
 }
 
 func getButtons(this js.Value, args []js.Value) interface{} {
-	buttons := [2]Button{
-		{"wall", []string{"top", "left", "right", "tl", "tr"}},
-		{"ground", []string{}},
-	}
-
 	resetButton := `<button onclick="createBlock()">Reset Block</button>`
 	gridButton := `<button onclick="toggleGrid()">Toggle Grid</button>`
 	collisionButton := `<button onclick="EDITOR.tileType='collision'">Add collision</button>`
@@ -89,17 +88,15 @@ func getButtons(this js.Value, args []js.Value) interface{} {
 
 	var buttonGroup string
 
-	for i, button := range buttons {
-		buttonGroup += fmt.Sprintf(`<button onclick="showButtons(%d)">%s</button>`, i, button.buttonType)
-		buttonGroup += fmt.Sprintf(`<div id="bgroup-%d" class="bgroup hidden">`, i)
+	for tileType, tiles := range getTileset() {
+		buttonGroup += fmt.Sprintf(`<button onclick="showButtons('%s')">%s</button>`, tileType, tileType)
+		buttonGroup += fmt.Sprintf(`<div id="bgroup-%s" class="bgroup hidden">`, tileType)
 
-		if len(button.directions) > 0 {
-			for _, direction := range button.directions {
-				buttonGroup += fmt.Sprintf(`<button class="%s %s" onclick="EDITOR.tileType='%s'; EDITOR.commandParams = {direction: '%s'};"></button>`, button.buttonType, direction, button.buttonType, direction)
-			}
-		} else {
-			buttonGroup += fmt.Sprintf(`<button class="%s" onclick="EDITOR.tileType='%s'; EDITOR.commandParams = [];"></button>`, button.buttonType, button.buttonType)
+		for _, tile := range tiles {
+			// TODO: remove that 50px and put it in a proper place
+			buttonGroup += fmt.Sprintf(`<button class="tile" style="background-position: %dpx %dpx" onclick="EDITOR.tileType='%s'; EDITOR.commandParams = {tileId: %d};"></button>`, tile.x*-50, tile.y*-50, tileType, tile.id)
 		}
+
 		buttonGroup += "</div>"
 	}
 
@@ -110,7 +107,7 @@ func getButtons(this js.Value, args []js.Value) interface{} {
 
 func createBlock(this js.Value, args []js.Value) interface{} {
 	block = make([][]Tile, 9)
-	defaultTile := Tile{layers: [2]Layer{{materialType: "ground", direction: ""}, {}}, isBlocking: false}
+	defaultTile := Tile{layers: [2]Layer{{materialType: "floor", tileId: 150}, {}}, isBlocking: false}
 
 	for i := range block {
 		block[i] = make([]Tile, 9)
@@ -126,14 +123,14 @@ func createBlock(this js.Value, args []js.Value) interface{} {
 
 // args[0] -> coordinates (0,0)
 // args[1] -> tileType (wall, ground, collision)
-// args[2] -> direction (top, left, right, tl, tr)
+// args[2] -> tileId
 // args[3] -> layer (0,1)
 func setTile(this js.Value, args []js.Value) interface{} {
 	fmt.Println(args)
 
 	coordinates := strings.Split(args[0].String(), ",")
 	tileType := args[1].String()
-	direction := args[2].String()
+	tileId := uint8(args[2].Int())
 	layer := 0
 
 	if !args[3].IsUndefined() {
@@ -151,10 +148,12 @@ func setTile(this js.Value, args []js.Value) interface{} {
 
 	if tileType != Collision {
 		block[y][x].layers[layer].materialType = tileType
-		block[y][x].layers[layer].direction = direction
+		block[y][x].layers[layer].tileId = tileId
 	} else {
 		block[y][x].isBlocking = !block[y][x].isBlocking
 	}
+
+	fmt.Println(block[y][x].layers[layer].materialType)
 
 	renderGrid()
 	return nil
