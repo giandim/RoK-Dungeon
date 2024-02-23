@@ -25,7 +25,8 @@ button {
   border-radius: var(--border-radius);
 }
 
-button.active {
+button.active,
+button:not(.active):focus {
   background-color: var(--main-bg-color);
   color: white;
 }
@@ -134,11 +135,16 @@ button.wall.br {
   background-size: calc(var(--tileset-size) * var(--scale-value));
 }
 
+.grid div > div {
+  position: absolute;
+}
+
 .grid > div.collision.show::before {
   background: rgba(255, 0, 0, 0.2);
   content: "";
   width: 100%;
   height: 100%;
+  z-index: 10;
 }
 
 .player {

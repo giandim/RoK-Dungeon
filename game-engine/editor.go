@@ -18,30 +18,20 @@ type Tile struct {
 }
 
 const (
-	Wall      = "wall"
-	Floor     = "floor"
-	Collision = "collision"
-	Item      = "item"
+	DefaultScale              = 5
+	DefaultTileSize           = 16
+	TileCoordinatesMultiplier = DefaultTileSize * -DefaultScale
+	ButtonTileMultiplier      = -50
 )
 
 var block [][]Tile
 
-func getTileTypes() map[string]bool {
-	return map[string]bool{
-		Collision: true,
-		Wall:      true,
-		Floor:     true,
-		Item:      true,
-	}
-}
-
 // Render the main grid for the editor
 func renderGrid() {
-	grid := "<div class='grid'>"
+	grid := `<div class="grid">`
 
 	for y := range block {
 		for x, tile := range block[y] {
-			secondLayer := ""
 			cssClass := tile.layers[0].materialType
 
 			var tileX, tileY int16
@@ -50,24 +40,26 @@ func renderGrid() {
 				cssClass += " collision"
 			}
 
+			var secondLayer string
 			// Add a second layer if present
 			if tile.layers[1] != (Layer{}) {
 				tileX, tileY, _ = getCoordinates(int16(tile.layers[1].tileId))
-				secondLayer = fmt.Sprintf("<div onclick=\"selectTile('%d,%d')\" class=\"%s\" style=\"background-position: %dpx %dpx\"></div>", y, x, tile.layers[1].materialType, tileX*16*-5, tileY*16*-5)
+				secondLayer = fmt.Sprintf(`<div class="%s" style="background-position: %dpx %dpx"></div>`, tile.layers[1].materialType, tileX*TileCoordinatesMultiplier, tileY*TileCoordinatesMultiplier)
 			}
 
 			// add a player placeholder
 			if y == 8 && x == 4 {
-				secondLayer = fmt.Sprintf("<div onclick=\"selectTile('%d,%d')\" class=\"player\"></div>", y, x)
+				secondLayer = fmt.Sprintf(`<div onclick="selectTile('%d,%d')" class="player"></div>`, y, x)
 			}
 
 			tileX, tileY, _ = getCoordinates(int16(tile.layers[0].tileId))
-			grid += fmt.Sprintf("<div onclick=\"selectTile('%d,%d')\" class=\"%s\" style=\"background-position: %dpx %dpx\">%s</div>", y, x, cssClass, tileX*16*-5, tileY*16*-5, secondLayer)
+
+			// Append the tile HTML to the grid
+			grid += fmt.Sprintf(`<div onclick="selectTile('%d,%d')" class="%s" style="background-position: %dpx %dpx">%s</div>`, y, x, cssClass, tileX*TileCoordinatesMultiplier, tileY*TileCoordinatesMultiplier, secondLayer)
 		}
 	}
 
 	grid += "</div>"
-
 	js.Global().Get("document").Call("getElementById", "editor").Set("innerHTML", grid)
 }
 
@@ -79,7 +71,9 @@ type Button struct {
 func getButtons(this js.Value, args []js.Value) interface{} {
 	resetButton := `<button onclick="createBlock()">Reset Block</button>`
 	gridButton := `<button onclick="toggleGrid()">Toggle Grid</button>`
-	collisionButton := `<button onclick="EDITOR.tileType='collision'">Add collision</button>`
+	collisionButton := fmt.Sprintf(`<button onclick="EDITOR.tileType='%s'">Add collision</button>`, Collision)
+	removeButton := fmt.Sprintf(`<button onclick="EDITOR.tileType='%s'">Remove tile</button>`, Empty)
+
 	layerButtons := `
     <div class="layer-buttons">
       <button onclick="selectLayer(0)" class="active">Layer 1</button>
@@ -95,14 +89,13 @@ func getButtons(this js.Value, args []js.Value) interface{} {
 		buttonGroup += fmt.Sprintf(`<div id="bgroup-%s" class="bgroup hidden">`, tileType)
 
 		for _, tile := range tiles {
-			// TODO: remove that 50px and put it in a proper place
-			buttonGroup += fmt.Sprintf(`<button class="tile" style="background-position: %dpx %dpx" onclick="EDITOR.tileType='%s'; EDITOR.commandParams = {tileId: %d};"></button>`, tile.x*-50, tile.y*-50, tileType, tile.id)
+			buttonGroup += fmt.Sprintf(`<button class="tile" style="background-position: %dpx %dpx" onclick="EDITOR.tileType='%s'; EDITOR.commandParams = {tileId: %d};"></button>`, tile.x*ButtonTileMultiplier, tile.y*ButtonTileMultiplier, tileType, tile.id)
 		}
 
 		buttonGroup += "</div>"
 	}
 
-	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", resetButton+gridButton+layerButtons+buttonGroup+collisionButton)
+	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", resetButton+gridButton+layerButtons+buttonGroup+collisionButton+removeButton)
 
 	return nil
 }
@@ -150,11 +143,16 @@ func setTile(this js.Value, args []js.Value) interface{} {
 		return nil
 	}
 
-	if tileType != Collision {
+	if tileType == Empty {
+		// Clear the layer if the tile type is Empty
+		block[y][x].layers[layer] = Layer{}
+	} else if tileType != Collision && !args[3].IsUndefined() {
 		block[y][x].layers[layer].materialType = tileType
 		block[y][x].layers[layer].tileId = tileId
-	} else {
+	} else if tileType == Collision {
 		block[y][x].isBlocking = !block[y][x].isBlocking
+	} else {
+		return nil
 	}
 
 	renderGrid()

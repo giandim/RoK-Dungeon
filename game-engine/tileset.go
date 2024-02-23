@@ -2,6 +2,24 @@ package main
 
 import "fmt"
 
+const (
+	Wall      = "wall"
+	Floor     = "floor"
+	Collision = "collision"
+	Item      = "item"
+	Empty     = "empty"
+)
+
+func getTileTypes() map[string]bool {
+	return map[string]bool{
+		Collision: true,
+		Wall:      true,
+		Floor:     true,
+		Item:      true,
+		Empty:     true,
+	}
+}
+
 type Tileset struct {
 	id int16
 	x  int16
