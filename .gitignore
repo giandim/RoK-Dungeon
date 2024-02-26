@@ -22,3 +22,4 @@ go.work
 
 # Compiled binary
 dist/**
+game-engine/assets/blocks/**

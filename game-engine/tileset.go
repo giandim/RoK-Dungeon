@@ -37,6 +37,8 @@ func getTileset() map[string][]Tileset {
 			{id: 105, x: 5, y: 0},
 			{id: 106, x: 5, y: 1},
 			{id: 107, x: 5, y: 4},
+			{id: 108, x: 0, y: 5},
+			{id: 109, x: 5, y: 5},
 		},
 		"floor": {
 			{id: 150, x: 9, y: 7},
@@ -44,6 +46,7 @@ func getTileset() map[string][]Tileset {
 			{id: 152, x: 7, y: 0},
 			{id: 153, x: 8, y: 0},
 			{id: 154, x: 9, y: 0},
+			{id: 155, x: 8, y: 7},
 		},
 		"item": {
 			{id: 200, x: 0, y: 8},
@@ -61,6 +64,7 @@ func getTileset() map[string][]Tileset {
 			{id: 212, x: 7, y: 9},
 			{id: 213, x: 8, y: 9},
 			{id: 214, x: 7, y: 3},
+			{id: 215, x: 7, y: 7},
 		},
 	}
 }

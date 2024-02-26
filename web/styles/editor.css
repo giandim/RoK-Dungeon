@@ -10,6 +10,11 @@
   --tile-size: 16px;
 }
 
+html,
+body {
+  min-height: 100vh;
+}
+
 body {
   margin: 0;
   background-color: var(--main-bg-color);
@@ -56,6 +61,13 @@ button:not(.active):focus {
   border-radius: var(--border-radius);
 }
 
+.connections {
+  background-color: var(--main-bg-color);
+  border-radius: var(--border-radius);
+  color: var(--white-color);
+  padding: var(--small-padding);
+}
+
 .bgroup button {
   color: var(--white-color);
   width: 50px;
@@ -64,7 +76,7 @@ button:not(.active):focus {
 
 .bgroup button.tile {
   background: url("../assets/images/dungeon_tiles.png") right top no-repeat;
-  background-size: calc(16px * 31);
+  background-size: calc(16px * 31.25);
 }
 
 .bgroup button.wall {
