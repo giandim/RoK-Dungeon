@@ -28,10 +28,10 @@ Editor -> localhost:8080/web/editor.html
 
 - [ ] Tileset and Map Editor
   - [x] Add collisions
-  - [ ] Add layers
-  - [ ] Add different types of walls, grounds, etc
-  - [ ] Save current block
-  - [ ] Load current block
+  - [X] Add layers
+  - [X] Add different types of walls, grounds, etc
+  - [X] Save current block
+  - [X] Load current block
   - [ ] Choose a size for the block
   - [ ] Floor Misc
   - [ ] Wall Misc
