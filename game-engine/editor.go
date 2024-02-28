@@ -13,22 +13,6 @@ import (
 	fetch "marwan.io/wasm-fetch"
 )
 
-type Layer struct {
-	MaterialType string `json:"materialType"`
-	TileId       uint8  `json:"tileId"`
-}
-
-type Tile struct {
-	IsBlocking bool     `json:"isBlocking"`
-	Layers     [2]Layer `json:"layers"`
-}
-
-type Block struct {
-	id          string
-	Tiles       [][]Tile `json:"tiles"`
-	Connections [4]bool  `json:"connections"`
-}
-
 const (
 	DefaultScale              = 5
 	DefaultTileSize           = 16
@@ -36,7 +20,37 @@ const (
 	ButtonTileMultiplier      = -50
 )
 
+type Block struct {
+	id          string
+	Tiles       [][]Tile `json:"tiles"`
+	Connections [4]bool  `json:"connections"`
+}
+
+type Tile struct {
+	IsBlocking bool     `json:"isBlocking"`
+	Layers     [2]Layer `json:"layers"`
+}
+
+type Layer struct {
+	MaterialType string `json:"materialType"`
+	TileId       uint8  `json:"tileId"`
+}
+
 var block Block
+
+func main() {
+	registerCallbacks()
+	select {}
+}
+
+func registerCallbacks() {
+	js.Global().Set("_EDITOR_getButtons", js.FuncOf(getButtons))
+	js.Global().Set("_EDITOR_createBlock", js.FuncOf(createBlock))
+	js.Global().Set("_EDITOR_saveBlock", js.FuncOf(saveBlock))
+	js.Global().Set("_EDITOR_getBlocks", js.FuncOf(getBlocks))
+	js.Global().Set("_EDITOR_loadBlock", js.FuncOf(loadBlock))
+	js.Global().Set("_EDITOR_setTile", js.FuncOf(setTile))
+}
 
 // Render the main grid for the editor
 func renderGrid() {
@@ -61,7 +75,7 @@ func renderGrid() {
 			}
 
 			// add a player placeholder
-			if y == 8 && x == 4 {
+			if y == 4 && x == 4 {
 				secondLayer = fmt.Sprintf(`<div onclick="selectTile('%d,%d')" class="player"></div>`, y, x)
 			}
 
@@ -260,18 +274,4 @@ func loadBlock(this js.Value, args []js.Value) interface{} {
 		renderGrid()
 	}()
 	return nil
-}
-
-func registerCallbacks() {
-	js.Global().Set("_EDITOR_getButtons", js.FuncOf(getButtons))
-	js.Global().Set("_EDITOR_createBlock", js.FuncOf(createBlock))
-	js.Global().Set("_EDITOR_saveBlock", js.FuncOf(saveBlock))
-	js.Global().Set("_EDITOR_getBlocks", js.FuncOf(getBlocks))
-	js.Global().Set("_EDITOR_loadBlock", js.FuncOf(loadBlock))
-	js.Global().Set("_EDITOR_setTile", js.FuncOf(setTile))
-}
-
-func main() {
-	registerCallbacks()
-	select {}
 }

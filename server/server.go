@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,16 +20,19 @@ const (
 	BlockDir = "/game-engine/assets/blocks/"
 )
 
-func getBlocks(w http.ResponseWriter, r *http.Request) {
+var blockDirPath = ""
+
+func init() {
 	wd, err := os.Getwd()
 	if err != nil {
-		http.Error(w, "Error getting working directory: "+err.Error(), http.StatusInternalServerError)
+		fmt.Println("Error getting working directory:", err)
 		return
 	}
+	blockDirPath = wd + BlockDir
+}
 
-	dirPath := wd + BlockDir
-
-	matches, _ := filepath.Glob(dirPath + "*.bin")
+func getBlocks(w http.ResponseWriter, r *http.Request) {
+	matches, _ := filepath.Glob(blockDirPath + "*.bin")
 	var blocks []string
 
 	for _, match := range matches {
@@ -37,7 +41,6 @@ func getBlocks(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, _ := json.Marshal(blocks)
-
 	fmt.Fprint(w, bytes.NewBuffer(data))
 }
 
@@ -48,21 +51,13 @@ func saveBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wd, err := os.Getwd()
-	if err != nil {
-		http.Error(w, "Error getting working directory: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	dirPath := wd + BlockDir
-
 	// Check if the directory exists, create it if not
-	if err := os.MkdirAll(dirPath, 0755); err != nil {
+	if err := os.MkdirAll(blockDirPath, 0755); err != nil {
 		http.Error(w, "Error creating directory: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	matches, _ := filepath.Glob(dirPath + "g01i*.bin")
+	matches, _ := filepath.Glob(blockDirPath + "g01i*.bin")
 
 	// Find the most recent block for that group
 	maxId := 0
@@ -81,9 +76,9 @@ func saveBlock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filename := fmt.Sprintf("g01i%04d.bin", maxId+1)
-	// Open the file for writing
+	// Create the file for writing
 	// format is g00i0000.bin
-	file, err := os.Create(dirPath + filename)
+	file, err := os.Create(blockDirPath + filename)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -91,7 +86,10 @@ func saveBlock(w http.ResponseWriter, r *http.Request) {
 
 	defer file.Close()
 
-	_, err = file.Write(data)
+	writer := gzip.NewWriter(file)
+	defer writer.Close()
+
+	_, err = writer.Write(data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -103,21 +101,29 @@ func saveBlock(w http.ResponseWriter, r *http.Request) {
 func findBlockByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	wd, err := os.Getwd()
+	file, err := os.Open(blockDirPath + id + ".bin")
 	if err != nil {
-		http.Error(w, "Error getting working directory: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	file, err := os.ReadFile(wd + BlockDir + id + ".bin")
-	if err != nil {
-
 		http.Error(w, "Error opening file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/msgpack")
 
-	w.Write(file)
+	defer file.Close()
+
+	reader, err := gzip.NewReader(file)
+	if err != nil {
+		http.Error(w, "Error creating gzip reader: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	reader.Close()
+
+	decompressedData, err := io.ReadAll(reader)
+	if err != nil {
+		http.Error(w, "Error reading decompressed data: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(decompressedData)
 }
 
 func main() {
