@@ -14,10 +14,10 @@ import (
 )
 
 const (
-	DefaultScale              = 5
-	DefaultTileSize           = 16
-	TileCoordinatesMultiplier = DefaultTileSize * -DefaultScale
-	ButtonTileMultiplier      = -50
+	DefaultScale         = 5
+	DefaultTileSize      = 16
+	ButtonTileMultiplier = -50
+	DefaultGridSize      = 9
 )
 
 type Block struct {
@@ -36,7 +36,10 @@ type Layer struct {
 	TileId       uint8  `json:"tileId"`
 }
 
-var block Block
+var (
+	block        Block
+	currentScale int16 = DefaultScale
+)
 
 func main() {
 	registerCallbacks()
@@ -50,6 +53,7 @@ func registerCallbacks() {
 	js.Global().Set("_EDITOR_getBlocks", js.FuncOf(getBlocks))
 	js.Global().Set("_EDITOR_loadBlock", js.FuncOf(loadBlock))
 	js.Global().Set("_EDITOR_setTile", js.FuncOf(setTile))
+	js.Global().Set("_EDITOR_changeZoom", js.FuncOf(changeZoom))
 }
 
 // Render the main grid for the editor
@@ -71,7 +75,7 @@ func renderGrid() {
 			// Add a second layer if present
 			if tile.Layers[1] != (Layer{}) {
 				tileX, tileY, _ = getCoordinates(int16(tile.Layers[1].TileId))
-				secondLayer = fmt.Sprintf(`<div class="%s" style="background-position: %dpx %dpx"></div>`, tile.Layers[1].MaterialType, tileX*TileCoordinatesMultiplier, tileY*TileCoordinatesMultiplier)
+				secondLayer = fmt.Sprintf(`<div class="%s" style="background-position: %dpx %dpx"></div>`, tile.Layers[1].MaterialType, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize)
 			}
 
 			// add a player placeholder
@@ -82,11 +86,13 @@ func renderGrid() {
 			tileX, tileY, _ = getCoordinates(int16(tile.Layers[0].TileId))
 
 			// Append the tile HTML to the grid
-			grid += fmt.Sprintf(`<div onclick="selectTile('%d,%d')" class="%s" style="background-position: %dpx %dpx">%s</div>`, y, x, cssClass, tileX*TileCoordinatesMultiplier, tileY*TileCoordinatesMultiplier, secondLayer)
+			grid += fmt.Sprintf(`<div onclick="selectTile('%d,%d')" class="%s" style="background-position: %dpx %dpx">%s</div>`, y, x, cssClass, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize, secondLayer)
 		}
 	}
 
 	grid += "</div>"
+
+	js.Global().Get("document").Get("documentElement").Get("style").Call("setProperty", "--col-number", len(block.Tiles))
 	js.Global().Get("document").Call("getElementById", "editor").Set("innerHTML", grid)
 }
 
@@ -97,20 +103,19 @@ type Button struct {
 
 func getButtons(this js.Value, args []js.Value) interface{} {
 	resetButton := `<button onclick="createBlock()">Reset Block</button>`
-	gridButton := `<button onclick="toggleGrid()">Toggle Grid</button>`
 	collisionButton := fmt.Sprintf(`<button onclick="EDITOR.tileType='%s'">Add collision</button>`, Collision)
 	removeButton := fmt.Sprintf(`<button onclick="EDITOR.tileType='%s'">Remove tile</button>`, Empty)
 	saveButton := `<button onclick="saveBlock()">Save Block</button>`
 
 	layerButtons := `
-    <div class="layer-buttons">
+    <section class="layer-buttons">
       <button onclick="selectLayer(0)" class="active">Layer 1</button>
       <button onclick="selectLayer(1)">Layer 2</button>
       <button onclick="selectLayer()">Collisions</button>
-    </div>
+    </section>
   `
 
-	var buttonGroup string
+	buttonGroup := `<section class="flex-column">`
 
 	for tileType, tiles := range getTileset() {
 		buttonGroup += fmt.Sprintf(`<button onclick="showButtons('%s')">%s</button>`, tileType, tileType)
@@ -123,28 +128,37 @@ func getButtons(this js.Value, args []js.Value) interface{} {
 		buttonGroup += "</div>"
 	}
 
-	connections := `
-    <div class="connections">
-      Tile Connections<br>
-      <input type="checkbox" id="up" name="connections" value="up"><label for="up">top</label> 
-      <input type="checkbox" id="right" name="connections" value="right"><label for="right">right</label>
-      <input type="checkbox" id="down" name="connections" value="down"><label for="down">bottom</label>
-      <input type="checkbox" id="left" name="connections" value="left"><label for="left">left</label>
-    </div>
-  `
+	buttonGroup += "</section>"
 
-	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", saveButton+resetButton+gridButton+layerButtons+buttonGroup+collisionButton+removeButton+connections)
+	connections := `<section>Tile Connections<br>`
+	connections += fmt.Sprintf(`<input type="checkbox" id="up" name="connections" value="up" %s><label for="up">top</label>`, conditionalAttribute(block.Connections[0], "checked"))
+	connections += fmt.Sprintf(`<input type="checkbox" id="right" name="connections" value="right" %s><label for="right">right</label>`, conditionalAttribute(block.Connections[1], "checked"))
+	connections += fmt.Sprintf(`<input type="checkbox" id="down" name="connections" value="down" %s><label for="down">bottom</label>`, conditionalAttribute(block.Connections[3], "checked"))
+	connections += fmt.Sprintf(`<input type="checkbox" id="left" name="connections" value="left" %s><label for="left">left</label>`, conditionalAttribute(block.Connections[3], "checked"))
+	connections += `</section>`
+
+	otherButtons := `<section><button onclick="_EDITOR_changeZoom(1)"><i class="zoom-in"></i></button>`
+	otherButtons += fmt.Sprintf(`<button onclick="_EDITOR_changeZoom(-1)" %s><i class="zoom-out"></i></button>`, conditionalAttribute(currentScale < 2, "disabled"))
+	otherButtons += `<button onclick="toggleGrid()"><i class="display-grid"></i></button></section>`
+
+	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", saveButton+resetButton+layerButtons+buttonGroup+collisionButton+removeButton+connections+otherButtons)
 
 	return nil
 }
 
 func createBlock(this js.Value, args []js.Value) interface{} {
+	gridSize := DefaultGridSize
+
+	if len(args) > 0 {
+		gridSize = args[0].Int()
+	}
+
 	tiles := &block.Tiles
-	*tiles = make([][]Tile, 9)
+	*tiles = make([][]Tile, gridSize)
 	defaultTile := Tile{Layers: [2]Layer{{MaterialType: "floor", TileId: 150}, {}}, IsBlocking: false}
 
 	for i := range *tiles {
-		(*tiles)[i] = make([]Tile, 9)
+		(*tiles)[i] = make([]Tile, gridSize)
 
 		for j := range (*tiles)[i] {
 			(*tiles)[i][j] = defaultTile
@@ -271,7 +285,27 @@ func loadBlock(this js.Value, args []js.Value) interface{} {
 			fmt.Println("Error Unmarshaling block: ", err)
 			return
 		}
+
 		renderGrid()
+		getButtons(this, args)
 	}()
+	return nil
+}
+
+// args[0] -> zoom 1 -> in | -1 -> out
+func changeZoom(this js.Value, args []js.Value) interface{} {
+	zoom := int16(-1)
+
+	if !args[0].IsUndefined() && args[0].Int() == 1 {
+		zoom = 1
+	}
+
+	currentScale += zoom
+
+	js.Global().Get("document").Get("documentElement").Get("style").Call("setProperty", "--scale-value", currentScale)
+
+	renderGrid()
+	getButtons(this, args)
+
 	return nil
 }

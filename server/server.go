@@ -28,7 +28,28 @@ func init() {
 		fmt.Println("Error getting working directory:", err)
 		return
 	}
+
 	blockDirPath = wd + BlockDir
+}
+
+func main() {
+	r := chi.NewRouter()
+
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:8080"},
+		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
+
+	r.Get("/api/blocks", getBlocks)
+	r.Get("/api/blocks/{id}", findBlockByID)
+	r.Post("/api/blocks", saveBlock)
+
+	if err := http.ListenAndServe(":8081", r); err != nil {
+		fmt.Println("Error:", err)
+	}
 }
 
 func getBlocks(w http.ResponseWriter, r *http.Request) {
@@ -124,24 +145,4 @@ func findBlockByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(decompressedData)
-}
-
-func main() {
-	r := chi.NewRouter()
-
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:8080"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		AllowCredentials: false,
-		MaxAge:           300,
-	}))
-
-	r.Get("/api/blocks", getBlocks)
-	r.Get("/api/blocks/{id}", findBlockByID)
-	r.Post("/api/blocks", saveBlock)
-
-	if err := http.ListenAndServe(":8081", r); err != nil {
-		fmt.Println("Error:", err)
-	}
 }

@@ -25,3 +25,10 @@ func convertArrayToSlice(jsArray js.Value, convertFunc func(js.Value) interface{
 
 	return resultSlice.Interface()
 }
+
+func conditionalAttribute(condition bool, attr string) string {
+	if condition {
+		return attr
+	}
+	return ""
+}

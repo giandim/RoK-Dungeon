@@ -1,6 +1,7 @@
 :root {
   --white-color: #fff;
   --main-bg-color: #484f58;
+  --secondary-bg-color: firebrick;
   --command-panel-bg-color: #222;
   --border-radius: 5px;
   --small-padding: 5px;
@@ -36,6 +37,19 @@ button:not(.active):focus {
   color: white;
 }
 
+section {
+  background-color: var(--secondary-bg-color);
+  border-radius: var(--border-radius);
+  color: var(--white-color);
+  padding: var(--small-padding);
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
 #command-panel {
   grid-area: command-panel;
   background-color: var(--command-panel-bg-color);
@@ -59,13 +73,6 @@ button:not(.active):focus {
   padding: var(--small-padding);
   background-color: var(--main-bg-color);
   border-radius: var(--border-radius);
-}
-
-.connections {
-  background-color: var(--main-bg-color);
-  border-radius: var(--border-radius);
-  color: var(--white-color);
-  padding: var(--small-padding);
 }
 
 .bgroup button {
@@ -164,11 +171,114 @@ button.wall.br {
   height: 100%;
   background:
     url("../assets/images/bojji.png") center center no-repeat,
-    url("../assets/images/dungeon_tiles.png") right top no-repeat,
-    url("../assets/images/forest_tiles.png") no-repeat;
+    url("../assets/images/dungeon_tiles.png") right top no-repeat;
   background-size: 60px, 18rem, 70rem;
 }
 
 .hidden {
   display: none;
+}
+
+/* ICONS */
+.zoom-in {
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  transform: scale(var(--ggs, 1));
+  width: 16px;
+  height: 16px;
+  border: 2px solid;
+  border-radius: 100%;
+  background: linear-gradient(to bottom, currentColor 5px, transparent 0)
+    no-repeat 2px 5px/8px 2px;
+  margin-top: -4px;
+}
+
+.zoom-in::after,
+.zoom-in::before {
+  content: "";
+  display: block;
+  box-sizing: border-box;
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  background: currentColor;
+}
+
+.zoom-in::after {
+  transform: rotate(-45deg);
+  border-radius: 3px;
+  top: 10px;
+  left: 12px;
+}
+
+.zoom-in::before {
+  top: 2px;
+  left: 5px;
+}
+
+.zoom-out {
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  transform: scale(var(--ggs, 1));
+  width: 16px;
+  height: 16px;
+  border: 2px solid;
+  border-radius: 100%;
+  margin-top: -4px;
+}
+
+.zoom-out::after,
+.zoom-out::before {
+  content: "";
+  display: block;
+  box-sizing: border-box;
+  position: absolute;
+  background: currentColor;
+}
+
+.zoom-out::after {
+  transform: rotate(-45deg);
+  border-radius: 3px;
+  width: 2px;
+  height: 8px;
+  top: 10px;
+  left: 12px;
+}
+
+.zoom-out::before {
+  width: 8px;
+  height: 2px;
+  top: 5px;
+  left: 2px;
+}
+
+.display-grid {
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  transform: scale(var(--ggs, 1));
+  height: 14px;
+  width: 14px;
+  border: 2px solid transparent;
+  box-shadow: 0 0 0 2px;
+}
+
+.display-grid::after,
+.display-grid::before {
+  content: "";
+  display: block;
+  box-sizing: border-box;
+  position: absolute;
+  width: 10px;
+  height: 4px;
+  border-right: 4px solid;
+  border-left: 4px solid;
+  top: 0;
+  left: 0;
+}
+
+.display-grid::before {
+  top: 6px;
 }
