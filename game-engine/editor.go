@@ -58,6 +58,7 @@ func registerCallbacks() {
 	js.Global().Set("_EDITOR_setTile", js.FuncOf(setTile))
 	js.Global().Set("_EDITOR_changeZoom", js.FuncOf(changeZoom))
 	js.Global().Set("_EDITOR_addLayer", js.FuncOf(addLayer))
+	js.Global().Set("_EDITOR_renderLayersSection", js.FuncOf(renderLayersSection))
 }
 
 // Render the main grid for the editor
@@ -149,8 +150,6 @@ func getButtons(this js.Value, args []js.Value) interface{} {
 	otherButtons += `<button onclick="toggleGrid()"><i class="display-grid"></i></button></section>`
 
 	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", saveAndResetSection+layerButtons+buttonGroup+collisionButton+removeButton+connections+otherButtons)
-
-	renderLayersSection()
 
 	return nil
 }
@@ -306,10 +305,13 @@ func loadBlock(this js.Value, args []js.Value) interface{} {
 			return
 		}
 
+		fmt.Println("load block")
+
 		block.id = blockId
 
 		renderGrid()
 		getButtons(this, args)
+		renderLayersSection(this, args)
 	}()
 	return nil
 }
@@ -339,12 +341,12 @@ func addLayer(this js.Value, args []js.Value) interface{} {
 		}
 	}
 
-	renderLayersSection()
+	renderLayersSection(this, args)
 
 	return nil
 }
 
-func renderLayersSection() {
+func renderLayersSection(this js.Value, args []js.Value) interface{} {
 	layers := len(block.Tiles[0][0].Layers)
 
 	section := `<div class="layers">`
@@ -374,4 +376,6 @@ func renderLayersSection() {
 	} else {
 		parent.Call("appendChild", newLayerSection)
 	}
+
+	return nil
 }

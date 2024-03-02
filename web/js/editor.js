@@ -7,6 +7,7 @@ const EDITOR = {
 function createBlock() {
   _EDITOR_createBlock();
   _EDITOR_getButtons();
+  _EDITOR_renderLayersSection();
 }
 
 function toggleGrid() {
