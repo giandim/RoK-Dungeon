@@ -26,9 +26,15 @@ func convertArrayToSlice(jsArray js.Value, convertFunc func(js.Value) interface{
 	return resultSlice.Interface()
 }
 
+// Return a HTML attribute if the condition is true
 func conditionalAttribute(condition bool, attr string) string {
 	if condition {
 		return attr
 	}
 	return ""
+}
+
+// Javascript console.log
+func jsConsoleLog(values ...interface{}) {
+	js.Global().Get("console").Call("log", values...)
 }

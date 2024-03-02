@@ -45,11 +45,41 @@ func main() {
 
 	r.Get("/api/blocks", getBlocks)
 	r.Get("/api/blocks/{id}", findBlockByID)
+	r.Put("/api/blocks/{id}", updateBlock)
 	r.Post("/api/blocks", saveBlock)
 
 	if err := http.ListenAndServe(":8081", r); err != nil {
 		fmt.Println("Error:", err)
 	}
+}
+
+func updateBlock(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	file, err := os.Open(blockDirPath + id + ".bin")
+	if err != nil {
+		http.Error(w, "Error opening file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	defer file.Close()
+
+	writer := gzip.NewWriter(file)
+	defer writer.Close()
+
+	_, err = writer.Write(data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprint(w, id)
 }
 
 func getBlocks(w http.ResponseWriter, r *http.Request) {

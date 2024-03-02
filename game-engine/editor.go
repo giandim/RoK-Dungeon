@@ -27,8 +27,8 @@ type Block struct {
 }
 
 type Tile struct {
-	IsBlocking bool     `json:"isBlocking"`
-	Layers     [2]Layer `json:"layers"`
+	IsBlocking bool    `json:"isBlocking"`
+	Layers     []Layer `json:"layers"`
 }
 
 type Layer struct {
@@ -46,6 +46,9 @@ func main() {
 	select {}
 }
 
+// TODO: add a duplicate block
+// TODO: add a update block
+// TODO: add a remove block
 func registerCallbacks() {
 	js.Global().Set("_EDITOR_getButtons", js.FuncOf(getButtons))
 	js.Global().Set("_EDITOR_createBlock", js.FuncOf(createBlock))
@@ -54,6 +57,7 @@ func registerCallbacks() {
 	js.Global().Set("_EDITOR_loadBlock", js.FuncOf(loadBlock))
 	js.Global().Set("_EDITOR_setTile", js.FuncOf(setTile))
 	js.Global().Set("_EDITOR_changeZoom", js.FuncOf(changeZoom))
+	js.Global().Set("_EDITOR_addLayer", js.FuncOf(addLayer))
 }
 
 // Render the main grid for the editor
@@ -73,7 +77,7 @@ func renderGrid() {
 
 			var secondLayer string
 			// Add a second layer if present
-			if tile.Layers[1] != (Layer{}) {
+			if len(tile.Layers) > 1 && tile.Layers[1] != (Layer{}) {
 				tileX, tileY, _ = getCoordinates(int16(tile.Layers[1].TileId))
 				secondLayer = fmt.Sprintf(`<div class="%s" style="background-position: %dpx %dpx"></div>`, tile.Layers[1].MaterialType, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize)
 			}
@@ -87,6 +91,7 @@ func renderGrid() {
 
 			// Append the tile HTML to the grid
 			grid += fmt.Sprintf(`<div onclick="selectTile('%d,%d')" class="%s" style="background-position: %dpx %dpx">%s</div>`, y, x, cssClass, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize, secondLayer)
+
 		}
 	}
 
@@ -103,9 +108,11 @@ type Button struct {
 
 func getButtons(this js.Value, args []js.Value) interface{} {
 	resetButton := `<button onclick="createBlock()">Reset Block</button>`
+	saveButton := `<button onclick="saveBlock()">Save Block</button>`
+	saveAndResetSection := `<section class="flex-column">` + resetButton + saveButton + "</section>"
+
 	collisionButton := fmt.Sprintf(`<button onclick="EDITOR.tileType='%s'">Add collision</button>`, Collision)
 	removeButton := fmt.Sprintf(`<button onclick="EDITOR.tileType='%s'">Remove tile</button>`, Empty)
-	saveButton := `<button onclick="saveBlock()">Save Block</button>`
 
 	layerButtons := `
     <section class="layer-buttons">
@@ -137,11 +144,13 @@ func getButtons(this js.Value, args []js.Value) interface{} {
 	connections += fmt.Sprintf(`<input type="checkbox" id="left" name="connections" value="left" %s><label for="left">left</label>`, conditionalAttribute(block.Connections[3], "checked"))
 	connections += `</section>`
 
-	otherButtons := `<section><button onclick="_EDITOR_changeZoom(1)"><i class="zoom-in"></i></button>`
+	otherButtons := `<section id="action-buttons"><button onclick="_EDITOR_changeZoom(1)"><i class="zoom-in"></i></button>`
 	otherButtons += fmt.Sprintf(`<button onclick="_EDITOR_changeZoom(-1)" %s><i class="zoom-out"></i></button>`, conditionalAttribute(currentScale < 2, "disabled"))
 	otherButtons += `<button onclick="toggleGrid()"><i class="display-grid"></i></button></section>`
 
-	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", saveButton+resetButton+layerButtons+buttonGroup+collisionButton+removeButton+connections+otherButtons)
+	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", saveAndResetSection+layerButtons+buttonGroup+collisionButton+removeButton+connections+otherButtons)
+
+	renderLayersSection()
 
 	return nil
 }
@@ -153,15 +162,19 @@ func createBlock(this js.Value, args []js.Value) interface{} {
 		gridSize = args[0].Int()
 	}
 
-	tiles := &block.Tiles
-	*tiles = make([][]Tile, gridSize)
-	defaultTile := Tile{Layers: [2]Layer{{MaterialType: "floor", TileId: 150}, {}}, IsBlocking: false}
+	// Create a new block instance
+	block = Block{
+		id:          "",
+		Tiles:       make([][]Tile, gridSize),
+		Connections: [4]bool{},
+	}
 
-	for i := range *tiles {
-		(*tiles)[i] = make([]Tile, gridSize)
-
-		for j := range (*tiles)[i] {
-			(*tiles)[i][j] = defaultTile
+	for i := range block.Tiles {
+		block.Tiles[i] = make([]Tile, gridSize)
+		for j := range block.Tiles[i] {
+			layer := []Layer{{MaterialType: "floor", TileId: 150}}
+			defaultTile := Tile{Layers: layer, IsBlocking: false}
+			block.Tiles[i][j] = defaultTile
 		}
 	}
 
@@ -192,6 +205,7 @@ func setTile(this js.Value, args []js.Value) interface{} {
 	x, _ := strconv.Atoi(coordinates[1])
 
 	if _, ok := getTileTypes()[tileType]; !ok {
+		fmt.Println("This tile type does not exist: ", tileType)
 		return nil
 	}
 
@@ -223,13 +237,19 @@ func saveBlock(this js.Value, args []js.Value) interface{} {
 
 		data, err := json.Marshal(&block)
 		if err != nil {
-			// Handle the error, such as logging or returning an error to the caller
 			fmt.Printf("Error marshaling block data: %v", err)
 			return
 		}
-		resp, _ := fetch.Fetch("http://localhost:8081/api/blocks", &fetch.Opts{
+
+		httpMethod := fetch.MethodPost
+
+		if block.id != "" {
+			httpMethod = fetch.MethodPut
+		}
+
+		resp, _ := fetch.Fetch("http://localhost:8081/api/blocks/"+block.id, &fetch.Opts{
 			Body:   bytes.NewBuffer(data),
-			Method: fetch.MethodPost,
+			Method: httpMethod,
 			Signal: ctx,
 		})
 
@@ -286,6 +306,8 @@ func loadBlock(this js.Value, args []js.Value) interface{} {
 			return
 		}
 
+		block.id = blockId
+
 		renderGrid()
 		getButtons(this, args)
 	}()
@@ -308,4 +330,48 @@ func changeZoom(this js.Value, args []js.Value) interface{} {
 	getButtons(this, args)
 
 	return nil
+}
+
+func addLayer(this js.Value, args []js.Value) interface{} {
+	for y := range block.Tiles {
+		for x := range block.Tiles[y] {
+			block.Tiles[y][x].Layers = append(block.Tiles[y][x].Layers, Layer{})
+		}
+	}
+
+	renderLayersSection()
+
+	return nil
+}
+
+func renderLayersSection() {
+	layers := len(block.Tiles[0][0].Layers)
+
+	section := `<div class="layers">`
+
+	for i := layers; i > 0; i-- {
+		section += fmt.Sprintf(`
+      <div id="layer-%d"> 
+        <span onclick="selectLayer(%d)">Layer %d</span> 
+        <button><i>H</i></button>
+        <button><i>D</i></button>
+      </div>
+      `, i, i-1, i)
+	}
+
+	section += `</div><div><button onclick="_EDITOR_addLayer()">Add Layer</button></div>`
+
+	parent := js.Global().Get("document").Call("getElementById", "command-panel")
+
+	currentLayerSection := js.Global().Get("document").Call("getElementById", "layers-section")
+
+	newLayerSection := js.Global().Get("document").Call("createElement", "section")
+	newLayerSection.Set("id", "layers-section")
+	newLayerSection.Set("innerHTML", section)
+
+	if currentLayerSection.Truthy() {
+		parent.Call("replaceChild", newLayerSection, currentLayerSection)
+	} else {
+		parent.Call("appendChild", newLayerSection)
+	}
 }

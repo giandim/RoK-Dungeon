@@ -1,10 +1,13 @@
 :root {
+  --primary-color: #4b73ff;
   --white-color: #fff;
   --main-bg-color: #484f58;
-  --secondary-bg-color: firebrick;
+  --secondary-bg-color: dimgrey;
   --command-panel-bg-color: #222;
-  --border-radius: 5px;
+  --border-radius: 3px;
   --small-padding: 5px;
+  --small-gap: 5px;
+  --medium-padding: 8px;
   --col-number: 9;
   --scale-value: 5;
   --tileset-size: 160px;
@@ -33,21 +36,29 @@ button {
 
 button.active,
 button:not(.active):focus {
-  background-color: var(--main-bg-color);
+  background-color: var(--primary-color);
   color: white;
 }
 
 section {
   background-color: var(--secondary-bg-color);
-  border-radius: var(--border-radius);
   color: var(--white-color);
   padding: var(--small-padding);
+}
+
+section#action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+section#action-buttons button {
+  padding: var(--medium-padding);
 }
 
 .flex-column {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--small-gap);
 }
 
 #command-panel {
@@ -68,11 +79,10 @@ section {
 
 .bgroup {
   display: grid;
-  gap: 5px;
+  gap: var(--small-gap);
   grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
   padding: var(--small-padding);
   background-color: var(--main-bg-color);
-  border-radius: var(--border-radius);
 }
 
 .bgroup button {
@@ -167,8 +177,6 @@ button.wall.br {
 }
 
 .player {
-  width: 100%;
-  height: 100%;
   background:
     url("../assets/images/bojji.png") center center no-repeat,
     url("../assets/images/dungeon_tiles.png") right top no-repeat;
@@ -177,6 +185,30 @@ button.wall.br {
 
 .hidden {
   display: none;
+}
+
+#layers-section {
+  height: 170px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+#layers-section > div:first-child {
+  overflow-y: auto;
+  height: 140px;
+}
+
+.layers > div {
+  display: flex;
+  align-items: center;
+  gap: var(--small-gap);
+  margin: 1px;
+  padding: var(--small-padding);
+}
+
+.layers > div > span {
+  flex: 1;
 }
 
 /* ICONS */
