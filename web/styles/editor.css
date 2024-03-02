@@ -131,25 +131,43 @@ button.wall.br {
 
 .grid {
   display: grid;
+  position: absolute;
   border: 1px solid black;
-  grid-gap: 1px;
-  background-color: black;
   width: fit-content;
   grid-template-columns: repeat(
     var(--col-number),
     calc(var(--tile-size) * var(--scale-value))
   );
+  height: calc(var(--tile-size) * var(--scale-value) * var(--col-number));
 }
 
-.grid.no-gap {
-  grid-gap: 0;
+.grid#grid-layer-0 {
+  z-index: 999;
+  grid-template-columns: repeat(
+    var(--col-number),
+    calc(var(--tile-size) * var(--scale-value))
+  );
+  height: calc(var(--tile-size) * var(--scale-value) * var(--col-number));
+}
+
+#grid-layer-0 > div {
+  height: calc(var(--tile-size) * var(--scale-value) - 1px);
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+}
+
+#grid-layer-0.no-borders > div {
+  border: none;
+}
+
+.grid:not(#grid-layer-0):not(#grid-layer-1) > div {
+  position: absolute;
 }
 
 .grid > div {
   align-items: center;
   display: flex;
   justify-content: center;
-  background-color: white;
 }
 
 .grid div {
@@ -197,18 +215,25 @@ button.wall.br {
 #layers-section > div:first-child {
   overflow-y: auto;
   height: 140px;
+  display: flex;
+  flex-direction: column-reverse;
 }
 
 .layers > div {
   display: flex;
   align-items: center;
   gap: var(--small-gap);
-  margin: 1px;
   padding: var(--small-padding);
+}
+
+.layers > div.active {
+  background: var(--primary-color);
+  border-radius: var(--border-radius);
 }
 
 .layers > div > span {
   flex: 1;
+  cursor: pointer;
 }
 
 /* ICONS */

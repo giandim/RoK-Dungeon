@@ -11,7 +11,7 @@ function createBlock() {
 }
 
 function toggleGrid() {
-  document.getElementsByClassName("grid")[0].classList.toggle("no-gap");
+  document.getElementsByClassName("grid")[0].classList.toggle("no-borders");
 }
 
 function showButtons(index) {
@@ -20,9 +20,9 @@ function showButtons(index) {
 
 function selectLayer(index) {
   EDITOR.layer = index;
-  const buttons = document.querySelectorAll(".layer-buttons > button");
+  const buttons = document.querySelectorAll("#layers-section > .layers > div");
   buttons.forEach((b) => b.classList.remove("active"));
-  buttons[index ?? 2].classList.add("active");
+  buttons[(index ?? -1) + 1].classList.add("active");
 
   const collisions = document.querySelectorAll(".collision");
   collisions.forEach((c) => c.classList.remove("show"));
@@ -48,7 +48,7 @@ function saveBlock() {
   _EDITOR_saveBlock(directions);
 }
 
-function selectTile(coordinates) {
+function setTile(coordinates) {
   if (!EDITOR.tileType) {
     return;
   }

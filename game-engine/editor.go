@@ -62,44 +62,71 @@ func registerCallbacks() {
 }
 
 // Render the main grid for the editor
+// grids[0] -> collisions and grid
+// grids[1] -> layer 1 always rendered
 func renderGrid() {
-	grid := `<div class="grid">`
+	grids := make([]string, len(block.Tiles[0][0].Layers)+1)
 	tiles := &block.Tiles
 
 	for y, row := range *tiles {
+		// Render each tile
 		for x, tile := range row {
-			cssClass := tile.Layers[0].MaterialType
+			cssClass := ""
 
 			var tileX, tileY int16
+			tileX, tileY, _ = getCoordinates(int16(tile.Layers[0].TileId))
 
+			// Render the grid and collision tile
 			if tile.IsBlocking {
-				cssClass += " collision"
+				cssClass = "collision"
 			}
 
-			var secondLayer string
-			// Add a second layer if present
-			if len(tile.Layers) > 1 && tile.Layers[1] != (Layer{}) {
-				tileX, tileY, _ = getCoordinates(int16(tile.Layers[1].TileId))
-				secondLayer = fmt.Sprintf(`<div class="%s" style="background-position: %dpx %dpx"></div>`, tile.Layers[1].MaterialType, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize)
-			}
+			grids[0] += fmt.Sprintf(`<div onclick="setTile('%d,%d')" class="%s"></div>`, y, x, cssClass)
+
+			// The first layer is always rendered
+			cssClass = tile.Layers[0].MaterialType
 
 			// add a player placeholder
 			if y == 4 && x == 4 {
-				secondLayer = fmt.Sprintf(`<div onclick="selectTile('%d,%d')" class="player"></div>`, y, x)
+				// secondLayer = fmt.Sprintf(`<div onclick="setTile('%d,%d')" class="player"></div>`, y, x)
 			}
 
-			tileX, tileY, _ = getCoordinates(int16(tile.Layers[0].TileId))
-
 			// Append the tile HTML to the grid
-			grid += fmt.Sprintf(`<div onclick="selectTile('%d,%d')" class="%s" style="background-position: %dpx %dpx">%s</div>`, y, x, cssClass, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize, secondLayer)
+			grids[1] += fmt.Sprintf(`<div class="%s" style="background-position: %dpx %dpx"></div>`, cssClass, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize)
+
+			// The other layers are only rendered if they exist
+			for i := 1; i < len(tile.Layers); i++ {
+				fmt.Println("layer i:", i)
+				fmt.Println("layer:", tile.Layers[i])
+
+				layer := tile.Layers[i]
+
+				if layer.TileId > 0 {
+					tileX, tileY, _ = getCoordinates(int16(tile.Layers[i].TileId))
+					tileEl := fmt.Sprintf(`<div class="%s" style="background-position: %dpx %dpx; top: %dpx; left: %dpx"></div>`,
+						tile.Layers[i].MaterialType, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize, int16(y)*currentScale*DefaultTileSize, int16(x)*currentScale*DefaultTileSize)
+
+					grids[i+1] += tileEl
+				}
+			}
 
 		}
 	}
 
-	grid += "</div>"
+	js.Global().Get("document").Call("getElementById", "editor").Set("innerHTML", "")
+
+	// Render the grids
+	for i, grid := range grids {
+		gridEl := js.Global().Get("document").Call("createElement", "div")
+		gridEl.Set("id", fmt.Sprintf("grid-layer-%d", i))
+		gridEl.Set("className", "grid")
+
+		gridEl.Set("innerHTML", grid)
+
+		js.Global().Get("document").Call("getElementById", "editor").Call("appendChild", gridEl)
+	}
 
 	js.Global().Get("document").Get("documentElement").Get("style").Call("setProperty", "--col-number", len(block.Tiles))
-	js.Global().Get("document").Call("getElementById", "editor").Set("innerHTML", grid)
 }
 
 type Button struct {
@@ -114,14 +141,6 @@ func getButtons(this js.Value, args []js.Value) interface{} {
 
 	collisionButton := fmt.Sprintf(`<button onclick="EDITOR.tileType='%s'">Add collision</button>`, Collision)
 	removeButton := fmt.Sprintf(`<button onclick="EDITOR.tileType='%s'">Remove tile</button>`, Empty)
-
-	layerButtons := `
-    <section class="layer-buttons">
-      <button onclick="selectLayer(0)" class="active">Layer 1</button>
-      <button onclick="selectLayer(1)">Layer 2</button>
-      <button onclick="selectLayer()">Collisions</button>
-    </section>
-  `
 
 	buttonGroup := `<section class="flex-column">`
 
@@ -149,7 +168,7 @@ func getButtons(this js.Value, args []js.Value) interface{} {
 	otherButtons += fmt.Sprintf(`<button onclick="_EDITOR_changeZoom(-1)" %s><i class="zoom-out"></i></button>`, conditionalAttribute(currentScale < 2, "disabled"))
 	otherButtons += `<button onclick="toggleGrid()"><i class="display-grid"></i></button></section>`
 
-	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", saveAndResetSection+layerButtons+buttonGroup+collisionButton+removeButton+connections+otherButtons)
+	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", saveAndResetSection+buttonGroup+collisionButton+removeButton+connections+otherButtons)
 
 	return nil
 }
@@ -186,6 +205,7 @@ func createBlock(this js.Value, args []js.Value) interface{} {
 // args[2] -> tileId
 // args[3] -> layer (0,1)
 func setTile(this js.Value, args []js.Value) interface{} {
+	fmt.Println(args)
 	coordinates := strings.Split(args[0].String(), ",")
 	tileType := args[1].String()
 	layer := 0
@@ -330,6 +350,7 @@ func changeZoom(this js.Value, args []js.Value) interface{} {
 
 	renderGrid()
 	getButtons(this, args)
+	renderLayersSection(this, args)
 
 	return nil
 }
@@ -349,9 +370,14 @@ func addLayer(this js.Value, args []js.Value) interface{} {
 func renderLayersSection(this js.Value, args []js.Value) interface{} {
 	layers := len(block.Tiles[0][0].Layers)
 
-	section := `<div class="layers">`
+	section := `
+    <div class="layers">    
+      <div id="layer-0">
+        <span onclick="selectLayer()">Collisions</span> 
+      </div>
+  `
 
-	for i := layers; i > 0; i-- {
+	for i := 1; i <= layers; i++ {
 		section += fmt.Sprintf(`
       <div id="layer-%d"> 
         <span onclick="selectLayer(%d)">Layer %d</span> 
@@ -361,7 +387,12 @@ func renderLayersSection(this js.Value, args []js.Value) interface{} {
       `, i, i-1, i)
 	}
 
-	section += `</div><div><button onclick="_EDITOR_addLayer()">Add Layer</button></div>`
+	// Collisions don't have a layer
+	section += `
+    </div>
+      <div>
+        <button onclick="_EDITOR_addLayer()">Add Layer</button>
+      </div>`
 
 	parent := js.Global().Get("document").Call("getElementById", "command-panel")
 
