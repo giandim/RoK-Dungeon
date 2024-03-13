@@ -11,10 +11,10 @@ kill_server() {
 trap kill_server EXIT TERM
 
 # Build Go WebAssembly module
-GOOS=js GOARCH=wasm go build -o dist/editor.wasm game-engine/*.go
+GOOS=js GOARCH=wasm go build -o dist/editor.wasm game-editor/*.go
 
 # Build Go server executable
-go build -o dist/server server/server.go
+go build -o dist/server game-editor/server/server.go
 
 # Start your server in the background and store its PID
 ./dist/server &
