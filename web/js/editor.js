@@ -6,7 +6,7 @@ const EDITOR = {
 
 function createBlock() {
   _EDITOR_createBlock();
-  _EDITOR_getButtons();
+  _EDITOR_renderSidenav();
   _EDITOR_renderLayersSection();
 }
 
@@ -20,9 +20,9 @@ function showButtons(index) {
 
 function selectLayer(index) {
   EDITOR.layer = index;
-  const buttons = document.querySelectorAll("#layers-section > .layers > div");
-  buttons.forEach((b) => b.classList.remove("active"));
-  buttons[(index ?? -1) + 1].classList.add("active");
+  const layers = document.querySelectorAll("#layers-section > .layers > div");
+  layers.forEach((b) => b.classList.remove("active"));
+  layers[(index ?? -1) + 1].classList.add("active");
 
   const collisions = document.querySelectorAll(".collision");
   collisions.forEach((c) => c.classList.remove("show"));
@@ -66,4 +66,9 @@ function setTile(coordinates) {
   } else {
     selectLayer(EDITOR.layer);
   }
+}
+
+function toggleLayerVisibility(index, el) {
+  document.querySelector(`#grid-layer-${index}`)?.classList.toggle("hidden");
+  el.classList.toggle("active");
 }

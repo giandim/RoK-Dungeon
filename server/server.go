@@ -37,16 +37,16 @@ func main() {
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:8080"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           300,
 	}))
 
 	r.Get("/api/blocks", getBlocks)
 	r.Get("/api/blocks/{id}", findBlockByID)
 	r.Put("/api/blocks/{id}", updateBlock)
-	r.Post("/api/blocks", saveBlock)
+	r.Post("/api/blocks/", saveBlock)
 
 	if err := http.ListenAndServe(":8081", r); err != nil {
 		fmt.Println("Error:", err)
@@ -62,7 +62,7 @@ func updateBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, err := os.Open(blockDirPath + id + ".bin")
+	file, err := os.OpenFile(blockDirPath+id+".bin", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		http.Error(w, "Error opening file: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -70,7 +70,11 @@ func updateBlock(w http.ResponseWriter, r *http.Request) {
 
 	defer file.Close()
 
-	writer := gzip.NewWriter(file)
+	writer, err := gzip.NewWriterLevel(file, gzip.BestCompression)
+	if err != nil {
+		http.Error(w, "Error creating gzip writer: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 	defer writer.Close()
 
 	_, err = writer.Write(data)
@@ -137,7 +141,7 @@ func saveBlock(w http.ResponseWriter, r *http.Request) {
 
 	defer file.Close()
 
-	writer := gzip.NewWriter(file)
+	writer, err := gzip.NewWriterLevel(file, gzip.BestCompression)
 	defer writer.Close()
 
 	_, err = writer.Write(data)

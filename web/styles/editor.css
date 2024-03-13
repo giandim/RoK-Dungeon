@@ -10,8 +10,10 @@
   --medium-padding: 8px;
   --col-number: 9;
   --scale-value: 5;
-  --tileset-size: 160px;
   --tile-size: 16px;
+
+  --dungeon-tileset-size: 160px;
+  --forest-tileset-size: 208px;
 }
 
 html,
@@ -91,13 +93,7 @@ section#action-buttons button {
   height: 50px;
 }
 
-.bgroup button.tile {
-  background: url("../assets/images/dungeon_tiles.png") right top no-repeat;
-  background-size: calc(16px * 31.25);
-}
-
 .bgroup button.wall {
-  background: url("../assets/images/dungeon_tiles.png") right top no-repeat;
   background-size: 32rem;
 }
 
@@ -127,6 +123,25 @@ button.wall.bl {
 
 button.wall.br {
   background-position: -229px -177px;
+}
+
+.dungeon-tileset {
+  background: url(../assets/images/dungeon_tileset.png) no-repeat;
+  background-size: calc(var(--dungeon-tileset-size) * var(--scale-value));
+}
+
+.forest-tileset {
+  background: url(../assets/images/forest_tileset.png) no-repeat;
+  background-size: calc(var(--forest-tileset-size) * var(--scale-value));
+}
+
+/* TODO: what are those values? */
+.bgroup button.dungeon-tileset {
+  background-size: calc(100px * var(--scale-value));
+}
+
+.bgroup button.forest-tileset {
+  background-size: calc(130px * var(--scale-value));
 }
 
 .grid {
@@ -160,6 +175,15 @@ button.wall.br {
   border: none;
 }
 
+div[id^="grid-layer-"].hidden {
+  opacity: 0.3;
+  display: grid;
+}
+
+div[id^="grid-layer-"] > div {
+  text-indent: -99999999;
+}
+
 .grid:not(#grid-layer-0):not(#grid-layer-1) > div {
   position: absolute;
 }
@@ -175,13 +199,6 @@ button.wall.br {
   width: calc(var(--tile-size) * var(--scale-value));
 }
 
-.grid div.wall,
-.grid div.item,
-.grid div.floor {
-  background: url(../assets/images/dungeon_tiles.png) no-repeat;
-  background-size: calc(var(--tileset-size) * var(--scale-value));
-}
-
 .grid div > div {
   position: absolute;
 }
@@ -192,13 +209,6 @@ button.wall.br {
   width: 100%;
   height: 100%;
   z-index: 10;
-}
-
-.player {
-  background:
-    url("../assets/images/bojji.png") center center no-repeat,
-    url("../assets/images/dungeon_tiles.png") right top no-repeat;
-  background-size: 60px, 18rem, 70rem;
 }
 
 .hidden {

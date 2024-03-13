@@ -22,6 +22,7 @@ const (
 
 type Block struct {
 	id          string
+	TilesetId   int      `json:"tilesetId"`
 	Tiles       [][]Tile `json:"tiles"`
 	Connections [4]bool  `json:"connections"`
 }
@@ -33,7 +34,7 @@ type Tile struct {
 
 type Layer struct {
 	MaterialType string `json:"materialType"`
-	TileId       uint8  `json:"tileId"`
+	TileId       uint16 `json:"tileId"`
 }
 
 var (
@@ -50,15 +51,18 @@ func main() {
 // TODO: add a update block
 // TODO: add a remove block
 func registerCallbacks() {
-	js.Global().Set("_EDITOR_getButtons", js.FuncOf(getButtons))
+	js.Global().Set("_EDITOR_renderSidenav", js.FuncOf(renderSidenav))
 	js.Global().Set("_EDITOR_createBlock", js.FuncOf(createBlock))
 	js.Global().Set("_EDITOR_saveBlock", js.FuncOf(saveBlock))
+	js.Global().Set("_EDITOR_duplicateBlock", js.FuncOf(duplicateBlock))
 	js.Global().Set("_EDITOR_getBlocks", js.FuncOf(getBlocks))
 	js.Global().Set("_EDITOR_loadBlock", js.FuncOf(loadBlock))
 	js.Global().Set("_EDITOR_setTile", js.FuncOf(setTile))
+	js.Global().Set("_EDITOR_setTileset", js.FuncOf(setTileset))
 	js.Global().Set("_EDITOR_changeZoom", js.FuncOf(changeZoom))
 	js.Global().Set("_EDITOR_addLayer", js.FuncOf(addLayer))
 	js.Global().Set("_EDITOR_renderLayersSection", js.FuncOf(renderLayersSection))
+	js.Global().Set("_EDITOR_deleteLayer", js.FuncOf(deleteLayer))
 }
 
 // Render the main grid for the editor
@@ -74,7 +78,7 @@ func renderGrid() {
 			cssClass := ""
 
 			var tileX, tileY int16
-			tileX, tileY, _ = getCoordinates(int16(tile.Layers[0].TileId))
+			tileX, tileY, _ = getCoordinates(block.TilesetId, int16(tile.Layers[0].TileId))
 
 			// Render the grid and collision tile
 			if tile.IsBlocking {
@@ -86,25 +90,17 @@ func renderGrid() {
 			// The first layer is always rendered
 			cssClass = tile.Layers[0].MaterialType
 
-			// add a player placeholder
-			if y == 4 && x == 4 {
-				// secondLayer = fmt.Sprintf(`<div onclick="setTile('%d,%d')" class="player"></div>`, y, x)
-			}
-
 			// Append the tile HTML to the grid
-			grids[1] += fmt.Sprintf(`<div class="%s" style="background-position: %dpx %dpx"></div>`, cssClass, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize)
+			grids[1] += fmt.Sprintf(`<div class="%s-tileset %s" style="background-position: %dpx %dpx">%d</div>`, tilesets[block.TilesetId], cssClass, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize, tile.Layers[0].TileId)
 
 			// The other layers are only rendered if they exist
 			for i := 1; i < len(tile.Layers); i++ {
-				fmt.Println("layer i:", i)
-				fmt.Println("layer:", tile.Layers[i])
-
 				layer := tile.Layers[i]
 
 				if layer.TileId > 0 {
-					tileX, tileY, _ = getCoordinates(int16(tile.Layers[i].TileId))
-					tileEl := fmt.Sprintf(`<div class="%s" style="background-position: %dpx %dpx; top: %dpx; left: %dpx"></div>`,
-						tile.Layers[i].MaterialType, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize, int16(y)*currentScale*DefaultTileSize, int16(x)*currentScale*DefaultTileSize)
+					tileX, tileY, _ = getCoordinates(block.TilesetId, int16(tile.Layers[i].TileId))
+					tileEl := fmt.Sprintf(`<div class="%s-tileset %s" style="background-position: %dpx %dpx; top: %dpx; left: %dpx">%d</div>`,
+						tilesets[block.TilesetId], tile.Layers[i].MaterialType, tileX*currentScale*-DefaultTileSize, tileY*currentScale*-DefaultTileSize, int16(y)*currentScale*DefaultTileSize, int16(x)*currentScale*DefaultTileSize, tile.Layers[i].TileId)
 
 					grids[i+1] += tileEl
 				}
@@ -134,22 +130,23 @@ type Button struct {
 	directions []string
 }
 
-func getButtons(this js.Value, args []js.Value) interface{} {
+func renderSidenav(this js.Value, args []js.Value) interface{} {
 	resetButton := `<button onclick="createBlock()">Reset Block</button>`
 	saveButton := `<button onclick="saveBlock()">Save Block</button>`
-	saveAndResetSection := `<section class="flex-column">` + resetButton + saveButton + "</section>"
+	duplicateButton := `<button onclick="_EDITOR_duplicateBlock()">Duplicate Block</button>`
+	saveAndResetSection := `<section class="flex-column">` + resetButton + saveButton + duplicateButton + "</section>"
 
 	collisionButton := fmt.Sprintf(`<button onclick="EDITOR.tileType='%s'">Add collision</button>`, Collision)
 	removeButton := fmt.Sprintf(`<button onclick="EDITOR.tileType='%s'">Remove tile</button>`, Empty)
 
 	buttonGroup := `<section class="flex-column">`
 
-	for tileType, tiles := range getTileset() {
+	for tileType, tiles := range getTileset(block.TilesetId) {
 		buttonGroup += fmt.Sprintf(`<button onclick="showButtons('%s')">%s</button>`, tileType, tileType)
 		buttonGroup += fmt.Sprintf(`<div id="bgroup-%s" class="bgroup hidden">`, tileType)
 
 		for _, tile := range tiles {
-			buttonGroup += fmt.Sprintf(`<button class="tile" style="background-position: %dpx %dpx" onclick="EDITOR.tileType='%s'; EDITOR.commandParams = {tileId: %d};"></button>`, tile.x*ButtonTileMultiplier, tile.y*ButtonTileMultiplier, tileType, tile.id)
+			buttonGroup += fmt.Sprintf(`<button class="tile %s-tileset" style="background-position: %dpx %dpx" onclick="EDITOR.tileType='%s'; EDITOR.commandParams = {tileId: %d};"></button>`, tilesets[block.TilesetId], tile.x*ButtonTileMultiplier, tile.y*ButtonTileMultiplier, tileType, tile.id)
 		}
 
 		buttonGroup += "</div>"
@@ -168,7 +165,15 @@ func getButtons(this js.Value, args []js.Value) interface{} {
 	otherButtons += fmt.Sprintf(`<button onclick="_EDITOR_changeZoom(-1)" %s><i class="zoom-out"></i></button>`, conditionalAttribute(currentScale < 2, "disabled"))
 	otherButtons += `<button onclick="toggleGrid()"><i class="display-grid"></i></button></section>`
 
-	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", saveAndResetSection+buttonGroup+collisionButton+removeButton+connections+otherButtons)
+	tilesetSelect := `<section class="flex-column"><select onchange="_EDITOR_setTileset(+event.target.value)">`
+
+	for id, tile := range tilesets {
+		tilesetSelect += fmt.Sprintf(`<option value="%d" %s>%s</option>`, id, conditionalAttribute(id == block.TilesetId, "selected"), tile)
+	}
+
+	tilesetSelect += "</select></section>"
+
+	js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", saveAndResetSection+tilesetSelect+buttonGroup+collisionButton+removeButton+connections+otherButtons)
 
 	return nil
 }
@@ -183,6 +188,7 @@ func createBlock(this js.Value, args []js.Value) interface{} {
 	// Create a new block instance
 	block = Block{
 		id:          "",
+		TilesetId:   0,
 		Tiles:       make([][]Tile, gridSize),
 		Connections: [4]bool{},
 	}
@@ -190,7 +196,7 @@ func createBlock(this js.Value, args []js.Value) interface{} {
 	for i := range block.Tiles {
 		block.Tiles[i] = make([]Tile, gridSize)
 		for j := range block.Tiles[i] {
-			layer := []Layer{{MaterialType: "floor", TileId: 150}}
+			layer := []Layer{{MaterialType: "floor", TileId: 200}}
 			defaultTile := Tile{Layers: layer, IsBlocking: false}
 			block.Tiles[i][j] = defaultTile
 		}
@@ -205,15 +211,14 @@ func createBlock(this js.Value, args []js.Value) interface{} {
 // args[2] -> tileId
 // args[3] -> layer (0,1)
 func setTile(this js.Value, args []js.Value) interface{} {
-	fmt.Println(args)
 	coordinates := strings.Split(args[0].String(), ",")
 	tileType := args[1].String()
 	layer := 0
-	tileId := uint8(0)
+	tileId := uint16(0)
 	tiles := &block.Tiles
 
 	if !args[2].IsUndefined() {
-		tileId = uint8(args[2].Int())
+		tileId = uint16(args[2].Int())
 	}
 
 	if !args[3].IsUndefined() {
@@ -241,6 +246,17 @@ func setTile(this js.Value, args []js.Value) interface{} {
 	}
 
 	renderGrid()
+	return nil
+}
+
+func setTileset(this js.Value, args []js.Value) interface{} {
+	tilesetId := args[0].Int()
+	block.TilesetId = tilesetId
+
+	renderGrid()
+	renderSidenav(this, args)
+	renderLayersSection(this, args)
+
 	return nil
 }
 
@@ -279,6 +295,30 @@ func saveBlock(this js.Value, args []js.Value) interface{} {
 	return nil
 }
 
+func duplicateBlock(this js.Value, args []js.Value) interface{} {
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		data, err := json.Marshal(&block)
+		if err != nil {
+			fmt.Printf("Error marshaling block data: %v", err)
+			return
+		}
+
+		resp, _ := fetch.Fetch("http://localhost:8081/api/blocks/", &fetch.Opts{
+			Body:   bytes.NewBuffer(data),
+			Method: fetch.MethodPost,
+			Signal: ctx,
+		})
+
+		block.id = string(resp.Body)
+		js.Global().Get("alert").Invoke("Block Duplicated!")
+	}()
+
+	return nil
+}
+
 func getBlocks(this js.Value, args []js.Value) interface{} {
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -299,7 +339,7 @@ func getBlocks(this js.Value, args []js.Value) interface{} {
 
 		blocksHtml := ""
 		for _, block := range blocks {
-			blocksHtml += fmt.Sprintf(`<button onclick="_EDITOR_loadBlock('%s');_EDITOR_getButtons()">%s</button>`, block, block)
+			blocksHtml += fmt.Sprintf(`<button onclick="_EDITOR_loadBlock('%s');_EDITOR_renderSidenav()">%s</button>`, block, block)
 		}
 
 		js.Global().Get("document").Call("getElementById", "command-panel").Set("innerHTML", blocksHtml)
@@ -325,12 +365,10 @@ func loadBlock(this js.Value, args []js.Value) interface{} {
 			return
 		}
 
-		fmt.Println("load block")
-
 		block.id = blockId
 
 		renderGrid()
-		getButtons(this, args)
+		renderSidenav(this, args)
 		renderLayersSection(this, args)
 	}()
 	return nil
@@ -349,7 +387,7 @@ func changeZoom(this js.Value, args []js.Value) interface{} {
 	js.Global().Get("document").Get("documentElement").Get("style").Call("setProperty", "--scale-value", currentScale)
 
 	renderGrid()
-	getButtons(this, args)
+	renderSidenav(this, args)
 	renderLayersSection(this, args)
 
 	return nil
@@ -362,6 +400,26 @@ func addLayer(this js.Value, args []js.Value) interface{} {
 		}
 	}
 
+	renderLayersSection(this, args)
+
+	return nil
+}
+
+func deleteLayer(this js.Value, args []js.Value) interface{} {
+	idxToRemove := args[0].Int()
+
+	if idxToRemove >= len(block.Tiles[0][0].Layers) {
+		fmt.Println("Cannot remove layerat index:", idxToRemove)
+		return nil
+	}
+
+	for y := range block.Tiles {
+		for x := range block.Tiles[y] {
+			block.Tiles[y][x].Layers = append(block.Tiles[y][x].Layers[:idxToRemove], block.Tiles[y][x].Layers[idxToRemove+1:]...)
+		}
+	}
+
+	renderGrid()
 	renderLayersSection(this, args)
 
 	return nil
@@ -381,10 +439,10 @@ func renderLayersSection(this js.Value, args []js.Value) interface{} {
 		section += fmt.Sprintf(`
       <div id="layer-%d"> 
         <span onclick="selectLayer(%d)">Layer %d</span> 
-        <button><i>H</i></button>
-        <button><i>D</i></button>
+        <button onclick="toggleLayerVisibility(%d, this)"><i>H</i></button>
+        <button onclick="_EDITOR_deleteLayer(%d)"><i>D</i></button>
       </div>
-      `, i, i-1, i)
+      `, i, i-1, i, i, i-1)
 	}
 
 	// Collisions don't have a layer
