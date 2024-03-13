@@ -78,6 +78,7 @@ func renderGrid() {
 			cssClass := ""
 
 			var tileX, tileY int16
+
 			tileX, tileY, _ = getCoordinates(block.TilesetId, int16(tile.Layers[0].TileId))
 
 			// Render the grid and collision tile
@@ -157,7 +158,7 @@ func renderSidenav(this js.Value, args []js.Value) interface{} {
 	connections := `<section>Tile Connections<br>`
 	connections += fmt.Sprintf(`<input type="checkbox" id="up" name="connections" value="up" %s><label for="up">top</label>`, conditionalAttribute(block.Connections[0], "checked"))
 	connections += fmt.Sprintf(`<input type="checkbox" id="right" name="connections" value="right" %s><label for="right">right</label>`, conditionalAttribute(block.Connections[1], "checked"))
-	connections += fmt.Sprintf(`<input type="checkbox" id="down" name="connections" value="down" %s><label for="down">bottom</label>`, conditionalAttribute(block.Connections[3], "checked"))
+	connections += fmt.Sprintf(`<input type="checkbox" id="down" name="connections" value="down" %s><label for="down">bottom</label>`, conditionalAttribute(block.Connections[2], "checked"))
 	connections += fmt.Sprintf(`<input type="checkbox" id="left" name="connections" value="left" %s><label for="left">left</label>`, conditionalAttribute(block.Connections[3], "checked"))
 	connections += `</section>`
 
@@ -409,7 +410,7 @@ func deleteLayer(this js.Value, args []js.Value) interface{} {
 	idxToRemove := args[0].Int()
 
 	if idxToRemove >= len(block.Tiles[0][0].Layers) {
-		fmt.Println("Cannot remove layerat index:", idxToRemove)
+		fmt.Println("Cannot remove layer at index:", idxToRemove)
 		return nil
 	}
 

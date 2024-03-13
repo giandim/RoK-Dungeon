@@ -137,11 +137,11 @@ button.wall.br {
 
 /* TODO: what are those values? */
 .bgroup button.dungeon-tileset {
-  background-size: calc(100px * var(--scale-value));
+  background-size: calc(100px * 5);
 }
 
 .bgroup button.forest-tileset {
-  background-size: calc(130px * var(--scale-value));
+  background-size: calc(130px * 5);
 }
 
 .grid {

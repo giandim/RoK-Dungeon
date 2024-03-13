@@ -128,5 +128,5 @@ func getCoordinates(tilesetId int, tileId int16) (int16, int16, error) {
 			}
 		}
 	}
-	return 0, 0, fmt.Errorf("Tileset with id %d not found", tilesetId)
+	return -1, -1, fmt.Errorf("Tileset with id %d not found", tilesetId)
 }
