@@ -24,3 +24,5 @@ go.work
 dist/**
 game-engine/assets/blocks/**
 **/.DS_Store
+zig-cache
+zig-out
